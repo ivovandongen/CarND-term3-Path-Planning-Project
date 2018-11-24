@@ -2,8 +2,9 @@
 git_include(Eigen)
 
 add_library(core STATIC
-    ${CMAKE_SOURCE_DIR}/src/core.hpp
-    ${CMAKE_SOURCE_DIR}/src/core.cpp
+    ${CMAKE_SOURCE_DIR}/src/trigonometry.hpp
+    ${CMAKE_SOURCE_DIR}/src/map.hpp
+    ${CMAKE_SOURCE_DIR}/src/map.cpp
     )
 
 target_include_directories(core
