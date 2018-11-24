@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(TEMPLATE)
+project(PATH_PLANNER)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -49,11 +49,14 @@ add_subdirectory(src)
 
 # Main executable
 
-add_executable(Template
+add_executable(PathPlanner
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     )
 
-target_link_libraries(Template core)
+git_include(uWebSockets)
+git_include(json)
+
+target_link_libraries(PathPlanner libuWS json core)
 
 
 # Tests
