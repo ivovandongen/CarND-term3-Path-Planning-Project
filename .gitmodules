@@ -19,3 +19,6 @@
 [submodule "deps/cppcodec"]
 	path = deps/cppcodec
 	url = git@github.com:tplgy/cppcodec.git
+[submodule "deps/spline"]
+	path = deps/spline
+	url = git@github.com:ttk592/spline.git
