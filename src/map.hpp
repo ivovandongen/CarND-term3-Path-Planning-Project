@@ -19,7 +19,7 @@ public:
      * @param y
      * @return
      */
-    uint32_t closestWaypoint(double x, double y);
+    uint32_t closestWaypoint(double x, double y) const;
 
     /**
      * Find closest waypoint in the same heading.
@@ -28,7 +28,7 @@ public:
      * @param theta
      * @return
      */
-    uint32_t nextWaypoint(double x, double y, double theta);
+    uint32_t nextWaypoint(double x, double y, double theta) const;
 
     /**
      * Transform from Cartesian x,y coordinates to Frenet s,d coordinates
@@ -37,7 +37,7 @@ public:
      * @param theta
      * @return
      */
-    std::vector<double> getFrenet(double x, double y, double theta);
+    std::vector<double> getFrenet(double x, double y, double theta) const;
 
     /**
      * Transform from Frenet s,d coordinates to Cartesian x,y
@@ -45,7 +45,7 @@ public:
      * @param d
      * @return
      */
-    std::vector<double> getXY(double s, double d);
+    std::vector<double> getXY(double s, double d) const;
 
 private:
     const std::vector<double> maps_x;

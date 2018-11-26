@@ -54,7 +54,7 @@ Map::Map(std::vector<double> x, std::vector<double> y, std::vector<double> s, st
 
 Map::~Map() = default;
 
-uint32_t Map::closestWaypoint(double x, double y) {
+uint32_t Map::closestWaypoint(double x, double y) const {
 
     double closestLen = 100000; //large number
     uint32_t closestWaypoint = 0;
@@ -73,7 +73,7 @@ uint32_t Map::closestWaypoint(double x, double y) {
     return closestWaypoint;
 }
 
-uint32_t Map::nextWaypoint(double x, double y, double theta) {
+uint32_t Map::nextWaypoint(double x, double y, double theta) const {
     uint32_t closestWaypoint = this->closestWaypoint(x, y);
 
     double map_x = maps_x[closestWaypoint];
@@ -95,7 +95,7 @@ uint32_t Map::nextWaypoint(double x, double y, double theta) {
 }
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
-std::vector<double> Map::getFrenet(double x, double y, double theta) {
+std::vector<double> Map::getFrenet(double x, double y, double theta) const {
     auto next_wp = nextWaypoint(x, y, theta);
 
     size_t prev_wp = next_wp - 1;
@@ -138,7 +138,7 @@ std::vector<double> Map::getFrenet(double x, double y, double theta) {
 }
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
-std::vector<double> Map::getXY(double s, double d) {
+std::vector<double> Map::getXY(double s, double d) const {
     int prev_wp = -1;
 
     while (s > maps_s[prev_wp + 1] && (prev_wp < (int) (maps_s.size() - 1))) {
