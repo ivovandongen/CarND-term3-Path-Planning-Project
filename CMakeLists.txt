@@ -55,8 +55,9 @@ add_executable(PathPlanner
 
 git_include(uWebSockets)
 git_include(json)
+git_include(spline)
 
-target_link_libraries(PathPlanner libuWS json core)
+target_link_libraries(PathPlanner libuWS json spline core)
 
 
 # Tests

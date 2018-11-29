@@ -1,9 +1,12 @@
+#include <coordinates.hpp>
 #include <map.hpp>
 #include <trigonometry.hpp>
 
 #include <uWS.h>
 #include <json.hpp>
+#include <spline.h>
 
+#include <cassert>
 #include <math.h>
 #include <chrono>
 #include <thread>
@@ -29,8 +32,13 @@ string getJsonData(const string &s) {
     return "";
 }
 
-// TODO: Find a place for these constants
-int lane_width = 4;
+// TODO: Find a place for these constants/state
+int lane = 1;
+const int lane_width = 4;
+const double ref_vel = 49.5;
+
+// Max s-value on track before wrapping around
+const double max_s = 6945.554;
 
 struct Path {
     std::vector<double> x_vals;
@@ -67,14 +75,115 @@ Path calculatePath(const Map &map, double car_s, double car_d) {
     return {std::move(next_x_vals), std::move(next_y_vals)};
 }
 
+Path calculatePath(const Map &map, double car_s, double car_d, double car_x, double car_y, double car_yaw,
+                   const std::vector<double> &previous_path_x, const std::vector<double> &previous_path_y) {
+
+    size_t prev_size = previous_path_x.size();
+
+    // Way points
+    vector<double> way_pts_x;
+    vector<double> way_pts_y;
+
+    // Reference state
+    double ref_x = car_x;
+    double ref_y = car_y;
+    double ref_yaw = deg2rad(car_yaw);
+
+    if (prev_size < 2) {
+        // Not enough previous path points to use as a referene, use
+        // the car position and yaw to get the initial points
+        double prev_car_x = car_x - cos(car_yaw);
+        double prev_car_y = car_y - sin(car_yaw);
+
+        way_pts_x.push_back(prev_car_x);
+        way_pts_x.push_back(car_x);
+
+        way_pts_y.push_back(prev_car_y);
+        way_pts_y.push_back(car_y);
+    } else {
+        // Use the end of the remaining previous path
+        // to start off the next point calculations
+
+        // Last point
+        ref_x = previous_path_x[prev_size - 1];
+        ref_y = previous_path_y[prev_size - 1];
+
+        // Point before
+        double ref_x_prev = previous_path_x[prev_size - 2];
+        double ref_y_prev = previous_path_y[prev_size - 2];
+        ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+
+        way_pts_x.push_back(ref_x_prev);
+        way_pts_x.push_back(ref_x);
+
+        way_pts_y.push_back(ref_y_prev);
+        way_pts_y.push_back(ref_y);
+    }
+
+    // Add way points
+    for (size_t i = 0; i < 3; i++) {
+        auto wp = map.getXY(car_s + ((i + 1) * 30), (2 + 4 * lane));
+        std::cout << "Adding waypoint x:" << wp[0] << " y:" << wp[1]
+                  << std::endl;
+        way_pts_x.push_back(wp[0]);
+        way_pts_y.push_back(wp[1]);
+    }
+
+    assert(way_pts_x.size() == way_pts_y.size());
+
+    // Transform points to local coordinate space
+    for (size_t i = 0; i < way_pts_x.size(); i++) {
+        auto local = cartesian::Coordinates::toLocal(way_pts_x[i], way_pts_y[i], ref_x, ref_y, ref_yaw);
+        std::cout << "Transforming " << way_pts_x[i] << "x" << way_pts_y[i] << " to " << local.x() << "x"
+                  << local.y() << std::endl;
+        way_pts_x[i] = local.x();
+        way_pts_y[i] = local.y();
+    }
+
+    tk::spline spline;
+    spline.set_points(way_pts_x, way_pts_y);
+
+    vector<double> next_x_vals;
+    next_x_vals.reserve(50);
+    vector<double> next_y_vals;
+    next_y_vals.reserve(50);
+
+    // Add all remaining points from last iteration
+    for (size_t i = 0; i < prev_size; i++) {
+        next_x_vals.push_back(previous_path_x[i]);
+        next_y_vals.push_back(previous_path_y[i]);
+    }
+
+    // Determine target x,y,dist
+    double target_x = 30;
+    double target_y = spline(target_x);
+    double target_dist = sqrt(target_x * target_x + target_y * target_y);
+
+    // Interpolate the spline at set intervals
+    double x_add_on = 0;
+    for (size_t i = prev_size; i < 50; i++) {
+        double N = (target_dist / (.02 * ref_vel / 2.24));
+        double x_point = x_add_on + (target_x) / N;
+        double y_point = spline(x_point);
+
+        x_add_on = x_point;
+
+        auto global = cartesian::Coordinates::toGlobal(x_point, y_point, ref_x, ref_y, ref_yaw);
+        next_x_vals.push_back(global.x());
+        next_y_vals.push_back(global.y());
+    }
+
+    assert(next_x_vals.size() == next_y_vals.size());
+    assert(next_x_vals.size() == 50);
+
+    return {std::move(next_x_vals), std::move(next_y_vals)};
+}
+
 int main() {
     uWS::Hub h;
 
     // Read waypoint map
     Map map = Map::loadFromFile("../data/highway_map.csv");
-
-    // Max s-value on track before wrapping around
-    double max_s = 6945.554;
 
     h.onMessage([&map](
             uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -116,7 +225,8 @@ int main() {
 
                     json msgJson;
 
-                    Path path = calculatePath(map, car_s, car_d);
+                    Path path = calculatePath(map, car_s, car_d, car_x, car_y, car_yaw, previous_path_x,
+                                              previous_path_y);
 
                     // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
                     msgJson["next_x"] = path.x_vals;
