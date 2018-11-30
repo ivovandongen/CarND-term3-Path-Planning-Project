@@ -36,7 +36,7 @@ string getJsonData(const string &s) {
 // TODO: Find a place for these constants/state
 int lane = 1;
 const int lane_width = 4;
-const double target_vel = 49.5;
+const double max_vel = 49.5;
 
 // Max s-value on track before wrapping around
 const double max_s = 6945.554;
@@ -79,12 +79,13 @@ Path calculatePath(const Map &map, double car_s, double car_d) {
 
 Path calculatePath(const Map &map, const Vehicle &ego,
                    double ref_vel,
+                   double target_vel,
                    const std::vector<double> &previous_path_x,
                    const std::vector<double> &previous_path_y) {
 
     size_t prev_size = previous_path_x.size();
 
-    std::cout << "Current speed: " << ego.v() << std::endl;
+//    std::cout << "Current speed: " << ego.v() << std::endl;
 
     // Way points
     vector<double> way_pts_x;
@@ -166,8 +167,10 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     for (size_t i = prev_size; i < 50; i++) {
         if (ref_vel < target_vel) {
             ref_vel += .224;
+        } else if (ref_vel > target_vel) {
+            ref_vel -= .224;
         }
-        std::cout << "Target speed: " << ref_vel << std::endl;
+//        std::cout << "Target speed: " << ref_vel << std::endl;
 
         double N = (target_dist / (.02 * ref_vel / 2.24));
         double x_point = x_add_on + (target_x) / N;
@@ -235,11 +238,47 @@ int main() {
                     // Sensor Fusion Data, a list of all other cars on the same side of the road.
                     auto sensor_fusion = j[1]["sensor_fusion"];
 
+                    // The ego car state
                     Vehicle ego{car_x, car_y, car_s, car_d, car_yaw, car_speed};
+
+                    //["sensor_fusion"] A 2d vector of cars and then that car's
+                    // 0 car's unique ID,
+                    // 1 car's x position in map coordinates,
+                    // 2 car's y position in map coordinates,
+                    // 3 car's x velocity in m/s,
+                    // 4 car's y velocity in m/s,
+                    // 5 car's s position in frenet coordinates,
+                    // 6 car's d position in frenet coordinates.
+
+                    double target_speed = max_vel;
+
+                    // Check the way ahead
+                    for (auto &car:sensor_fusion) {
+                        double d = car[6];
+                        if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
+                            // We're in the same lane
+                            double vx = car[3];
+                            double vy = car[4];
+                            double speed = sqrt(vx * vx + vy * vy);
+                            double s = car[5];
+
+                            // Project s out
+                            s += ((double) previous_path_x.size() * 0.02 * speed);
+                            if ((s > car_s) && ((s - ego.s()) < 60)) {
+                                std::cout << "Nearing collision with: " << car[0] << std::endl;
+                                // The car is getting too close
+                                target_speed = std::min(target_speed, speed * 2.24);
+                            }
+                        }
+                    }
+
+                    std::cout << "Target speed: " << target_speed << std::endl;
+
 
                     Path path = calculatePath(map,
                                               ego,
                                               ref_vel,
+                                              target_speed,
                                               previous_path_x,
                                               previous_path_y);
 
