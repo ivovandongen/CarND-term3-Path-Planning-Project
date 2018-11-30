@@ -5,6 +5,7 @@ add_library(core STATIC
     ${CMAKE_SOURCE_DIR}/src/coordinates.hpp
     ${CMAKE_SOURCE_DIR}/src/coordinates.cpp
     ${CMAKE_SOURCE_DIR}/src/trigonometry.hpp
+    ${CMAKE_SOURCE_DIR}/src/vehicle.hpp
     ${CMAKE_SOURCE_DIR}/src/map.hpp
     ${CMAKE_SOURCE_DIR}/src/map.cpp
     )

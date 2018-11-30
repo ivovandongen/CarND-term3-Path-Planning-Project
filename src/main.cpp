@@ -1,6 +1,7 @@
 #include <coordinates.hpp>
 #include <map.hpp>
 #include <trigonometry.hpp>
+#include <vehicle.hpp>
 
 #include <uWS.h>
 #include <json.hpp>
@@ -75,8 +76,9 @@ Path calculatePath(const Map &map, double car_s, double car_d) {
     return {std::move(next_x_vals), std::move(next_y_vals)};
 }
 
-Path calculatePath(const Map &map, double car_s, double car_d, double car_x, double car_y, double car_yaw,
-                   const std::vector<double> &previous_path_x, const std::vector<double> &previous_path_y) {
+Path calculatePath(const Map &map, const Vehicle &ego,
+                   const std::vector<double> &previous_path_x,
+                   const std::vector<double> &previous_path_y) {
 
     size_t prev_size = previous_path_x.size();
 
@@ -85,21 +87,21 @@ Path calculatePath(const Map &map, double car_s, double car_d, double car_x, dou
     vector<double> way_pts_y;
 
     // Reference state
-    double ref_x = car_x;
-    double ref_y = car_y;
-    double ref_yaw = deg2rad(car_yaw);
+    double ref_x = ego.x();
+    double ref_y = ego.y();
+    double ref_yaw = deg2rad(ego.yaw());
 
     if (prev_size < 2) {
-        // Not enough previous path points to use as a referene, use
+        // Not enough previous path points to use as a reference, use
         // the car position and yaw to get the initial points
-        double prev_car_x = car_x - cos(car_yaw);
-        double prev_car_y = car_y - sin(car_yaw);
+        double prev_car_x = ego.x() - cos(ego.yaw());
+        double prev_car_y = ego.y() - sin(ego.yaw());
 
         way_pts_x.push_back(prev_car_x);
-        way_pts_x.push_back(car_x);
+        way_pts_x.push_back(ego.x());
 
         way_pts_y.push_back(prev_car_y);
-        way_pts_y.push_back(car_y);
+        way_pts_y.push_back(ego.y());
     } else {
         // Use the end of the remaining previous path
         // to start off the next point calculations
@@ -122,9 +124,7 @@ Path calculatePath(const Map &map, double car_s, double car_d, double car_x, dou
 
     // Add way points
     for (size_t i = 0; i < 3; i++) {
-        auto wp = map.getXY(car_s + ((i + 1) * 30), (2 + 4 * lane));
-        std::cout << "Adding waypoint x:" << wp[0] << " y:" << wp[1]
-                  << std::endl;
+        auto wp = map.getXY(ego.s() + ((i + 1) * 30), (2 + 4 * lane));
         way_pts_x.push_back(wp[0]);
         way_pts_y.push_back(wp[1]);
     }
@@ -134,8 +134,6 @@ Path calculatePath(const Map &map, double car_s, double car_d, double car_x, dou
     // Transform points to local coordinate space
     for (size_t i = 0; i < way_pts_x.size(); i++) {
         auto local = cartesian::Coordinates::toLocal(way_pts_x[i], way_pts_y[i], ref_x, ref_y, ref_yaw);
-        std::cout << "Transforming " << way_pts_x[i] << "x" << way_pts_y[i] << " to " << local.x() << "x"
-                  << local.y() << std::endl;
         way_pts_x[i] = local.x();
         way_pts_y[i] = local.y();
     }
@@ -223,12 +221,16 @@ int main() {
                     // Sensor Fusion Data, a list of all other cars on the same side of the road.
                     auto sensor_fusion = j[1]["sensor_fusion"];
 
-                    json msgJson;
+                    Vehicle ego{car_x, car_y, car_s, car_d, car_yaw, car_speed};
 
-                    Path path = calculatePath(map, car_s, car_d, car_x, car_y, car_yaw, previous_path_x,
+                    Path path = calculatePath(map,
+                                              ego,
+                                              ref_vel,
+                                              previous_path_x,
                                               previous_path_y);
 
                     // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+                    json msgJson;
                     msgJson["next_x"] = path.x_vals;
                     msgJson["next_y"] = path.y_vals;
 
