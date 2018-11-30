@@ -36,7 +36,7 @@ string getJsonData(const string &s) {
 // TODO: Find a place for these constants/state
 int lane = 1;
 const int lane_width = 4;
-const double ref_vel = 49.5;
+const double target_vel = 49.5;
 
 // Max s-value on track before wrapping around
 const double max_s = 6945.554;
@@ -44,6 +44,7 @@ const double max_s = 6945.554;
 struct Path {
     std::vector<double> x_vals;
     std::vector<double> y_vals;
+    double target_vel;
 };
 
 Path calculatePath(double car_x, double car_y, double car_yaw) {
@@ -77,10 +78,13 @@ Path calculatePath(const Map &map, double car_s, double car_d) {
 }
 
 Path calculatePath(const Map &map, const Vehicle &ego,
+                   double ref_vel,
                    const std::vector<double> &previous_path_x,
                    const std::vector<double> &previous_path_y) {
 
     size_t prev_size = previous_path_x.size();
+
+    std::cout << "Current speed: " << ego.v() << std::endl;
 
     // Way points
     vector<double> way_pts_x;
@@ -160,6 +164,11 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     // Interpolate the spline at set intervals
     double x_add_on = 0;
     for (size_t i = prev_size; i < 50; i++) {
+        if (ref_vel < target_vel) {
+            ref_vel += .224;
+        }
+        std::cout << "Target speed: " << ref_vel << std::endl;
+
         double N = (target_dist / (.02 * ref_vel / 2.24));
         double x_point = x_add_on + (target_x) / N;
         double y_point = spline(x_point);
@@ -171,10 +180,12 @@ Path calculatePath(const Map &map, const Vehicle &ego,
         next_y_vals.push_back(global.y());
     }
 
+    std::cout << "====" << ref_vel << std::endl;
+
     assert(next_x_vals.size() == next_y_vals.size());
     assert(next_x_vals.size() == 50);
 
-    return {std::move(next_x_vals), std::move(next_y_vals)};
+    return {std::move(next_x_vals), std::move(next_y_vals), ref_vel};
 }
 
 int main() {
@@ -183,7 +194,10 @@ int main() {
     // Read waypoint map
     Map map = Map::loadFromFile("../data/highway_map.csv");
 
-    h.onMessage([&map](
+    // Some state
+    double ref_vel = 0;
+
+    h.onMessage([&map, &ref_vel](
             uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
             uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
@@ -229,7 +243,9 @@ int main() {
                                               previous_path_x,
                                               previous_path_y);
 
-                    // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+                    // Store state for next iteration
+                    ref_vel = path.target_vel;
+
                     json msgJson;
                     msgJson["next_x"] = path.x_vals;
                     msgJson["next_y"] = path.y_vals;
