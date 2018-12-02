@@ -1,3 +1,4 @@
+#include <constants.hpp>
 #include <coordinates.hpp>
 #include <map.hpp>
 #include <trigonometry.hpp>
@@ -33,59 +34,21 @@ string getJsonData(const string &s) {
     return "";
 }
 
-// TODO: Find a place for these constants/state
-int lane = 1;
-const int lane_width = 4;
-const double max_vel = 49.5;
-
-// Max s-value on track before wrapping around
-const double max_s = 6945.554;
-
 struct Path {
     std::vector<double> x_vals;
     std::vector<double> y_vals;
     double target_vel;
 };
 
-Path calculatePath(double car_x, double car_y, double car_yaw) {
-    vector<double> next_x_vals;
-    vector<double> next_y_vals;
-
-    double dist_inc = 0.5;
-    for (int i = 0; i < 50; i++) {
-        next_x_vals.push_back(car_x + (dist_inc * i) * cos(deg2rad(car_yaw)));
-        next_y_vals.push_back(car_y + (dist_inc * i) * sin(deg2rad(car_yaw)));
-    }
-
-    return {std::move(next_x_vals), std::move(next_y_vals)};
-}
-
-Path calculatePath(const Map &map, double car_s, double car_d) {
-    vector<double> next_x_vals;
-    vector<double> next_y_vals;
-
-    double dist_inc = 0.5;
-    for (int i = 0; i < 50; i++) {
-        double next_s = car_s + (i + 1) * dist_inc;
-        double next_d = lane_width * 1.5;
-
-        auto xy = map.getXY(next_s, next_d);
-        next_x_vals.push_back(xy[0]);
-        next_y_vals.push_back(xy[1]);
-    }
-
-    return {std::move(next_x_vals), std::move(next_y_vals)};
-}
 
 Path calculatePath(const Map &map, const Vehicle &ego,
                    double ref_vel,
                    double target_vel,
+                   double target_lane,
                    const std::vector<double> &previous_path_x,
                    const std::vector<double> &previous_path_y) {
 
     size_t prev_size = previous_path_x.size();
-
-//    std::cout << "Current speed: " << ego.v() << std::endl;
 
     // Way points
     vector<double> way_pts_x;
@@ -128,8 +91,9 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     }
 
     // Add way points
-    for (size_t i = 0; i < 3; i++) {
-        auto wp = map.getXY(ego.s() + ((i + 1) * 30), (2 + 4 * lane));
+    std::array<int, 3> wp_intervals{60, 40, 30};
+    for (size_t i = 0; i < wp_intervals.size(); i++) {
+        auto wp = map.getXY(ego.s() + ((i + 1) * wp_intervals[i]), (2 + 4 * target_lane));
         way_pts_x.push_back(wp[0]);
         way_pts_y.push_back(wp[1]);
     }
@@ -147,9 +111,9 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     spline.set_points(way_pts_x, way_pts_y);
 
     vector<double> next_x_vals;
-    next_x_vals.reserve(50);
     vector<double> next_y_vals;
-    next_y_vals.reserve(50);
+    next_x_vals.reserve(TRAJECTORY_POINTS);
+    next_y_vals.reserve(TRAJECTORY_POINTS);
 
     // Add all remaining points from last iteration
     for (size_t i = 0; i < prev_size; i++) {
@@ -164,13 +128,12 @@ Path calculatePath(const Map &map, const Vehicle &ego,
 
     // Interpolate the spline at set intervals
     double x_add_on = 0;
-    for (size_t i = prev_size; i < 50; i++) {
+    for (size_t i = prev_size; i < TRAJECTORY_POINTS; i++) {
         if (ref_vel < target_vel) {
             ref_vel += .224;
         } else if (ref_vel > target_vel) {
             ref_vel -= .224;
         }
-//        std::cout << "Target speed: " << ref_vel << std::endl;
 
         double N = (target_dist / (.02 * ref_vel / 2.24));
         double x_point = x_add_on + (target_x) / N;
@@ -183,10 +146,10 @@ Path calculatePath(const Map &map, const Vehicle &ego,
         next_y_vals.push_back(global.y());
     }
 
-    std::cout << "====" << ref_vel << std::endl;
+    std::cout << "====" << std::endl;
 
     assert(next_x_vals.size() == next_y_vals.size());
-    assert(next_x_vals.size() == 50);
+    assert(next_x_vals.size() == TRAJECTORY_POINTS);
 
     return {std::move(next_x_vals), std::move(next_y_vals), ref_vel};
 }
@@ -210,10 +173,10 @@ int main() {
         //cout << sdata << endl;
         if (length > 2 && data[0] == '4' && data[1] == '2') {
 
-            auto s = getJsonData(data);
+            auto jsonData = getJsonData(data);
 
-            if (!s.empty()) {
-                auto j = json::parse(s);
+            if (!jsonData.empty()) {
+                auto j = json::parse(jsonData);
 
                 string event = j[0].get<string>();
 
@@ -250,12 +213,13 @@ int main() {
                     // 5 car's s position in frenet coordinates,
                     // 6 car's d position in frenet coordinates.
 
-                    double target_speed = max_vel;
+                    double target_speed = MAX_VELOCITY;
+                    int target_lane = ego.lane();
 
                     // Check the way ahead
                     for (auto &car:sensor_fusion) {
                         double d = car[6];
-                        if (d < (2 + 4 * lane + 2) && d > (2 + 4 * lane - 2)) {
+                        if (d < (2 + 4 * ego.lane() + 2) && d > (2 + 4 * ego.lane() - 2)) {
                             // We're in the same lane
                             double vx = car[3];
                             double vy = car[4];
@@ -266,19 +230,23 @@ int main() {
                             s += ((double) previous_path_x.size() * 0.02 * speed);
                             if ((s > car_s) && ((s - ego.s()) < 60)) {
                                 std::cout << "Nearing collision with: " << car[0] << std::endl;
+
                                 // The car is getting too close
-                                target_speed = std::min(target_speed, speed * 2.24);
+                                //target_speed = std::min(target_speed, speed * 2.24);
+                                target_lane = ego.lane() > 0 ? ego.lane() - 1 : ego.lane() + 1;
                             }
                         }
                     }
 
                     std::cout << "Target speed: " << target_speed << std::endl;
+                    std::cout << "Target lane: " << target_lane << " (current: " << ego.lane() << ")" << std::endl;
 
 
                     Path path = calculatePath(map,
                                               ego,
                                               ref_vel,
                                               target_speed,
+                                              target_lane,
                                               previous_path_x,
                                               previous_path_y);
 

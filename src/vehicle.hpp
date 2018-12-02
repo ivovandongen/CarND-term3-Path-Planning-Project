@@ -1,5 +1,7 @@
 #pragma once
 
+#include <constants.hpp>
+
 class Vehicle {
 public:
     Vehicle(double x, double y, double s, double d, double yaw, double v)
@@ -30,6 +32,10 @@ public:
 
     double v() const {
         return v_;
+    }
+
+    int lane() const {
+        return int(d() / LANE_WIDTH);
     }
 
 private:
