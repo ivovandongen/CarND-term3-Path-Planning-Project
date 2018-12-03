@@ -4,6 +4,7 @@ git_include(spline)
 
 add_library(core STATIC
         ${CMAKE_SOURCE_DIR}/src/constants.hpp
+        ${CMAKE_SOURCE_DIR}/src/conversion.hpp
         ${CMAKE_SOURCE_DIR}/src/coordinates.hpp
         ${CMAKE_SOURCE_DIR}/src/coordinates.cpp
         ${CMAKE_SOURCE_DIR}/src/map.hpp

@@ -105,12 +105,12 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     double x_add_on = 0;
     for (size_t i = prev_size; i < TRAJECTORY_POINTS; i++) {
         if (ref_vel < target_vel) {
-            ref_vel += .224;
+            ref_vel += .1; // max 5ms^2 == .1 m / .02 s
         } else if (ref_vel > target_vel) {
-            ref_vel -= .224;
+            ref_vel -= .1;
         }
 
-        double N = (target_dist / (.02 * ref_vel / 2.24));
+        double N = (target_dist / (.02 * ref_vel));
         double x_point = x_add_on + (target_x) / N;
         double y_point = spline(x_point);
 

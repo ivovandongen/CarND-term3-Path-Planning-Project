@@ -1,4 +1,5 @@
 #include <constants.hpp>
+#include <conversion.hpp>
 #include <coordinates.hpp>
 #include <map.hpp>
 #include <prediction.hpp>
@@ -98,7 +99,7 @@ int main() {
                     double car_s = j[1]["s"];
                     double car_d = j[1]["d"];
                     double car_yaw = j[1]["yaw"];
-                    double car_speed = j[1]["speed"];
+                    double car_speed_ms = mphToMs(j[1]["speed"]);
 
                     // Previous path data given to the Planner
                     auto previous_path_x = j[1]["previous_path_x"];
@@ -111,12 +112,12 @@ int main() {
                     auto sensor_fusion = j[1]["sensor_fusion"];
 
                     // The ego car state
-                    Vehicle ego{Vehicle::EGO_ID, car_x, car_y, car_s, car_d, car_yaw, car_speed * 0.44704};
+                    Vehicle ego{Vehicle::EGO_ID, car_x, car_y, car_s, car_d, car_yaw, car_speed_ms};
 
                     // Parse sensor fusion data
                     std::vector<Vehicle> traffic = parseSensorFusionData(sensor_fusion);
 
-                    double target_speed = MAX_VELOCITY;
+                    double target_speed_ms = mphToMs(MAX_VELOCITY_MPH);
                     int target_lane = ego.lane();
 
                     auto predictions = prediction::predictions(map, ego, traffic, 5);
@@ -136,11 +137,11 @@ int main() {
                             // KL follow
                             std::cout << "KL" << std::endl;
                             double distance = predictions.ahead->s() - ego.s();
-                            target_speed = std::min(
-                                    target_speed,
+                            target_speed_ms = std::min(
+                                    target_speed_ms,
                                     distance < 10
-                                    ? predictions.ahead->v() * 2.24 * .9
-                                    : predictions.ahead->v() * 2.24
+                                    ? predictions.ahead->v() * .9
+                                    : predictions.ahead->v()
                             );
                         }
                     }
@@ -150,7 +151,7 @@ int main() {
                     if (!predictions.free_ahead) {
                         std::cout << "Distance to car: " << predictions.ahead->s() - ego.s() << std::endl;
                     }
-                    std::cout << "Target speed: " << target_speed << std::endl;
+                    std::cout << "Target speed: " << msToMph(target_speed_ms) << std::endl;
                     std::cout << "Target lane: " << target_lane << " (current: " << ego.lane() << ")" << std::endl;
 
                     std::cout << std::endl;
@@ -159,7 +160,7 @@ int main() {
                     trajectory::Path path = trajectory::calculatePath(map,
                                                                       ego,
                                                                       ref_vel,
-                                                                      target_speed,
+                                                                      target_speed_ms,
                                                                       target_lane,
                                                                       previous_path_x,
                                                                       previous_path_y);
