@@ -1,14 +1,20 @@
 #pragma once
 
-#include <constants.hpp>
+#include <map.hpp>
 
 class Vehicle {
 public:
-    Vehicle(double x, double y, double s, double d, double yaw, double v)
-            : x_(x), y_(y), s_(s), d_(d), yaw_(yaw), v_(v) {
-    }
+    const static int EGO_ID = -1;
+
+    Vehicle(int id, double x, double y, double s, double d, double yaw, double v);
+
+    Vehicle(int id, double x, double y, double s, double d, double yaw, double vx, double vy);
 
     virtual ~Vehicle() = default;
+
+    int id() const {
+        return id_;
+    }
 
     double x() const {
         return x_;
@@ -34,11 +40,12 @@ public:
         return v_;
     }
 
-    int lane() const {
-        return int(d() / LANE_WIDTH);
-    }
+    int lane() const;
+
+    Vehicle stateIn(const Map&, double secs) const;
 
 private:
+    int id_;
     double x_;
     double y_;
     double s_;

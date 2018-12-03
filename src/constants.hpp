@@ -3,6 +3,7 @@
 static const int TRAJECTORY_POINTS = 50;
 
 constexpr int LANE_WIDTH = 4;
+constexpr int NUM_LANES = 3;
 constexpr double MAX_VELOCITY = 49.5;
 
 // Max s-value on track before wrapping around
