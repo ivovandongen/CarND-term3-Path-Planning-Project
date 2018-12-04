@@ -1,11 +1,12 @@
-#include <constants.hpp>
-#include <conversion.hpp>
+#include <behaviour.hpp>
 #include <coordinates.hpp>
+#include <constants.hpp>
 #include <map.hpp>
 #include <prediction.hpp>
 #include <trajectory.hpp>
 #include <trigonometry.hpp>
 #include <vehicle.hpp>
+#include <util/conversion.hpp>
 
 #include <uWS.h>
 #include <json.hpp>
@@ -70,10 +71,12 @@ int main() {
     // Read waypoint map
     Map map = Map::loadFromFile("../data/highway_map.csv");
 
+    behaviour::Behaviour behaviour(map);
+
     // Some state
     double ref_vel = 0;
 
-    h.onMessage([&map, &ref_vel](
+    h.onMessage([&map, &behaviour, &ref_vel](
             uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
             uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
@@ -99,7 +102,7 @@ int main() {
                     double car_s = j[1]["s"];
                     double car_d = j[1]["d"];
                     double car_yaw = j[1]["yaw"];
-                    double car_speed_ms = mphToMs(j[1]["speed"]);
+                    double car_speed_ms = util::mphToMs(j[1]["speed"]);
 
                     // Previous path data given to the Planner
                     auto previous_path_x = j[1]["previous_path_x"];
@@ -117,42 +120,18 @@ int main() {
                     // Parse sensor fusion data
                     std::vector<Vehicle> traffic = parseSensorFusionData(sensor_fusion);
 
-                    double target_speed_ms = mphToMs(MAX_VELOCITY_MPH);
-                    int target_lane = ego.lane();
-
+                    // Get predictions
                     auto predictions = prediction::predictions(map, ego, traffic, 5);
 
-                    // TODO: move to behaviour
-                    if (!predictions.free_ahead) {
-                        // The car is getting too close
-                        if (predictions.free_left) {
-                            // CL LEFT
-                            std::cout << "CL LEFT" << std::endl;
-                            target_lane -= 1;
-                        } else if (predictions.free_right) {
-                            // CL RIGHT
-                            std::cout << "CL RIGHT" << std::endl;
-                            target_lane += 1;
-                        } else {
-                            // KL follow
-                            std::cout << "KL" << std::endl;
-                            double distance = predictions.ahead->s() - ego.s();
-                            target_speed_ms = std::min(
-                                    target_speed_ms,
-                                    distance < 10
-                                    ? predictions.ahead->v() * .9
-                                    : predictions.ahead->v()
-                            );
-                        }
-                    }
+                    // Get target behaviour (throttles internally)
+                    auto targetState = behaviour.nextState(ego, traffic, predictions);
 
                     std::cout << "Position: s:" << ego.s() << " d:" << ego.d() << std::endl;
                     std::cout << predictions << std::endl;
                     if (!predictions.free_ahead) {
                         std::cout << "Distance to car: " << predictions.ahead->s() - ego.s() << std::endl;
                     }
-                    std::cout << "Target speed: " << msToMph(target_speed_ms) << std::endl;
-                    std::cout << "Target lane: " << target_lane << " (current: " << ego.lane() << ")" << std::endl;
+                    std::cout << "Target state: " << targetState << std::endl;
 
                     std::cout << std::endl;
 
@@ -160,13 +139,12 @@ int main() {
                     trajectory::Path path = trajectory::calculatePath(map,
                                                                       ego,
                                                                       ref_vel,
-                                                                      target_speed_ms,
-                                                                      target_lane,
+                                                                      targetState,
                                                                       previous_path_x,
                                                                       previous_path_y);
 
                     // Store state for next iteration
-                    ref_vel = path.target_vel;
+                    ref_vel = path.target_v;
 
                     json msgJson;
                     msgJson["next_x"] = path.x_vals;

@@ -12,14 +12,14 @@
 #include <cassert>
 #include <math.h>
 #include <vector>
+#include <iostream>
 
 namespace trajectory {
 
 
 Path calculatePath(const Map &map, const Vehicle &ego,
                    double ref_vel,
-                   double target_vel,
-                   double target_lane,
+                   const behaviour::State &targetState,
                    const std::vector<double> &previous_path_x,
                    const std::vector<double> &previous_path_y) {
 
@@ -68,7 +68,7 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     // Add way points
     std::array<int, 3> wp_intervals{60, 40, 30};
     for (size_t i = 0; i < wp_intervals.size(); i++) {
-        auto wp = map.getXY(ego.s() + ((i + 1) * wp_intervals[i]), (2 + 4 * target_lane));
+        auto wp = map.getXY(ego.s() + ((i + 1) * wp_intervals[i]), (2 + 4 * targetState.lane()));
         way_pts_x.push_back(wp[0]);
         way_pts_y.push_back(wp[1]);
     }
@@ -104,9 +104,9 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     // Interpolate the spline at set intervals
     double x_add_on = 0;
     for (size_t i = prev_size; i < TRAJECTORY_POINTS; i++) {
-        if (ref_vel < target_vel) {
+        if (ref_vel < targetState.speed()) {
             ref_vel += .1; // max 5ms^2 == .1 m / .02 s
-        } else if (ref_vel > target_vel) {
+        } else if (ref_vel > targetState.speed()) {
             ref_vel -= .1;
         }
 

@@ -1,8 +1,10 @@
 #include <test.hpp>
 
-#include <conversion.hpp>
+#include <util/conversion.hpp>
 
 #include <vector>
+
+using namespace util;
 
 TEST(Conversion, mphToMs) {
     EXPECT_NEAR(mphToMs(1), 0.44704, 0.001);

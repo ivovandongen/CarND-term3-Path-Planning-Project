@@ -3,8 +3,9 @@ git_include(Eigen)
 git_include(spline)
 
 add_library(core STATIC
+        ${CMAKE_SOURCE_DIR}/src/behaviour.hpp
+        ${CMAKE_SOURCE_DIR}/src/behaviour.cpp
         ${CMAKE_SOURCE_DIR}/src/constants.hpp
-        ${CMAKE_SOURCE_DIR}/src/conversion.hpp
         ${CMAKE_SOURCE_DIR}/src/coordinates.hpp
         ${CMAKE_SOURCE_DIR}/src/coordinates.cpp
         ${CMAKE_SOURCE_DIR}/src/map.hpp
@@ -16,6 +17,9 @@ add_library(core STATIC
         ${CMAKE_SOURCE_DIR}/src/trigonometry.hpp
         ${CMAKE_SOURCE_DIR}/src/vehicle.hpp
         ${CMAKE_SOURCE_DIR}/src/vehicle.cpp
+        ${CMAKE_SOURCE_DIR}/src/util/collections.hpp
+        ${CMAKE_SOURCE_DIR}/src/util/conversion.hpp
+        ${CMAKE_SOURCE_DIR}/src/util/time.hpp
         )
 
 target_include_directories(core
