@@ -11,6 +11,10 @@ behaviour::Behaviour::Behaviour(const Map &map)
 
 }
 
+static double min_buffer(double v) {
+    return std::max<>(10., 1 * v);
+}
+
 behaviour::State behaviour::Behaviour::nextState(const Vehicle &ego, const std::vector<Vehicle> &traffic,
                                                  const prediction::Predictions &predictions) {
     if (!transitioning(ego)) {
@@ -34,13 +38,16 @@ behaviour::State behaviour::Behaviour::nextState(const Vehicle &ego, const std::
         } else {
             // Fall back to keeping lane and slowing down
             double distance = predictions.ahead->s() - ego.s();
+            double buffer = min_buffer(std::max<>(ego.v(), predictions.ahead->v()));
             previous_state_ = State{Action::KEEP_LANE}
                     .withLane(ego.lane())
                     .withSpeed(
                             std::min(
+                                    // If enough distance, max speed / lead car speed
                                     util::mphToMs(MAX_VELOCITY_MPH),
-                                    distance < 10
-                                    ? predictions.ahead->v() * .9
+                                    // otherwise backoff speed a bit to increase buffer
+                                    distance < buffer
+                                    ? predictions.ahead->v() * (distance / buffer)
                                     : predictions.ahead->v()
                             )
                     );
@@ -58,7 +65,7 @@ bool behaviour::Behaviour::transitioning(const Vehicle &ego) {
             return previous_state_.lane() != ego.lane();
         default:
             // Have we spent our time on this state?
-            return util::unix_ts() - previous_state_.ts() < 2000;
+            return util::unix_ts() - previous_state_.ts() < 500;
     }
 }
 
