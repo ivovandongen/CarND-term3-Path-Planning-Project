@@ -1,6 +1,6 @@
 #pragma once
 
-#include <math.h>
+#include <cmath>
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }

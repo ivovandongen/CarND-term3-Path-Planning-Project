@@ -1,6 +1,6 @@
 #include "coordinates.hpp"
 
-#include <math.h>
+#include <cmath>
 
 namespace cartesian {
     Coordinates Coordinates::toGlobal(const double x, const double y, const double ref_x, const double ref_y,

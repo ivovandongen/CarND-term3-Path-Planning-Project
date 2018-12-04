@@ -6,7 +6,11 @@
 
 #include <iostream>
 
-behaviour::Behaviour::Behaviour(const Map &map)
+
+namespace behaviour {
+
+
+Behaviour::Behaviour(const Map &map)
         : map_(map), previous_state_({}) {
 
 }
@@ -15,14 +19,14 @@ static double min_buffer(double v) {
     return std::max<>(10., 1 * v);
 }
 
-behaviour::State behaviour::Behaviour::nextState(const Vehicle &ego, const std::vector<Vehicle> &traffic,
-                                                 const prediction::Predictions &predictions) {
+State Behaviour::nextState(const Vehicle &ego, const std::vector<Vehicle> &traffic,
+                           const prediction::Predictions &predictions) {
     if (!transitioning(ego)) {
         std::vector<Action> possibleSuccessions = successions();
 
 //        std::cout << "Succession states: " << possibleSuccessions << std::endl;
 
-//        // TODO: assign cost
+        // TODO: assign cost
         if (util::contains(possibleSuccessions, Action::KEEP_LANE)
             && predictions.free_ahead) {
             // Prefer staying in lane if it is free
@@ -57,7 +61,7 @@ behaviour::State behaviour::Behaviour::nextState(const Vehicle &ego, const std::
     return previous_state_;
 }
 
-bool behaviour::Behaviour::transitioning(const Vehicle &ego) {
+bool Behaviour::transitioning(const Vehicle &ego) {
     switch (previous_state_.action()) {
         case Action::CHANGE_LANE_LEFT:
         case Action::CHANGE_LANE_RIGHT:
@@ -69,7 +73,7 @@ bool behaviour::Behaviour::transitioning(const Vehicle &ego) {
     }
 }
 
-std::vector<behaviour::Action> behaviour::Behaviour::successions() {
+std::vector<Action> Behaviour::successions() {
     switch (previous_state_.action()) {
         case Action::INIT:
             return {Action::KEEP_LANE};
@@ -82,3 +86,26 @@ std::vector<behaviour::Action> behaviour::Behaviour::successions() {
     }
 }
 
+std::ostream &operator<<(std::ostream &stream, const Action &action) {
+    switch (action) {
+        case Action::INIT:
+            return stream << "INIT";
+        case Action::KEEP_LANE:
+            return stream << "KEEP_LANE";;
+        case Action::CHANGE_LANE_LEFT:
+            return stream << "CHANGE_LANE_LEFT";;
+        case Action::CHANGE_LANE_RIGHT:
+            return stream << "CHANGE_LANE_RIGHT";;
+    }
+}
+
+std::ostream &operator<<(std::ostream &stream, const State &state) {
+    return stream << "(Action:" << state.action()
+                  << ", time:" << state.ts()
+                  << ", speed:" << util::msToMph(state.speed())
+                  << ", lane:" << state.lane()
+                  << ", target_vehicle:" << state.targetVehicle()
+                  << ")";
+}
+
+} // namespace behaviour

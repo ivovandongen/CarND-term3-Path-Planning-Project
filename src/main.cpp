@@ -12,7 +12,7 @@
 #include <json.hpp>
 
 #include <cassert>
-#include <math.h>
+#include <cmath>
 #include <chrono>
 #include <thread>
 #include <vector>

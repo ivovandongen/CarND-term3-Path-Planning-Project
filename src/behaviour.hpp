@@ -85,27 +85,8 @@ private:
 
 };
 
+std::ostream &operator<<(std::ostream &stream, const Action &action);
 
-inline std::ostream &operator<<(std::ostream &stream, const Action &action) {
-    switch (action) {
-        case Action::INIT:
-            return stream << "INIT";
-        case Action::KEEP_LANE:
-            return stream << "KEEP_LANE";;
-        case Action::CHANGE_LANE_LEFT:
-            return stream << "CHANGE_LANE_LEFT";;
-        case Action::CHANGE_LANE_RIGHT:
-            return stream << "CHANGE_LANE_RIGHT";;
-    }
-}
-
-inline std::ostream &operator<<(std::ostream &stream, const State &state) {
-    return stream << "(Action:" << state.action()
-                  << ", time:" << state.ts()
-                  << ", speed:" << util::msToMph(state.speed())
-                  << ", lane:" << state.lane()
-                  << ", target_vehicle:" << state.targetVehicle()
-                  << ")";
-}
+std::ostream &operator<<(std::ostream &stream, const State &state);
 
 } // namespace behaviour

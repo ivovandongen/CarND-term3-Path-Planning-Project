@@ -4,7 +4,7 @@
 
 #include <fstream>
 #include <sstream>
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 Map Map::loadFromFile(const std::string &fileName) {

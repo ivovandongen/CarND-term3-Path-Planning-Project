@@ -10,7 +10,7 @@
 #define public public
 
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 
 using namespace behaviour;

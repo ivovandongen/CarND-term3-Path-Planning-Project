@@ -10,7 +10,7 @@
 
 #include <array>
 #include <cassert>
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <iostream>
 
