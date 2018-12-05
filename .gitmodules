@@ -22,3 +22,6 @@
 [submodule "deps/spline"]
 	path = deps/spline
 	url = git@github.com:ttk592/spline.git
+[submodule "deps/fmt"]
+	path = deps/fmt
+	url = git@github.com:fmtlib/fmt.git
