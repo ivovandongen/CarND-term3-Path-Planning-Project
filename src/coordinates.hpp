@@ -1,32 +1,34 @@
 #pragma once
 
 namespace cartesian {
-    class Coordinates {
-    public:
-        Coordinates(double x, double y);
 
-        virtual ~Coordinates();
+class Coordinates {
+public:
+    Coordinates(double x, double y);
 
-        static Coordinates toGlobal(double x, double y, double ref_x, double ref_y,
-                                    double ref_angle);
+    virtual ~Coordinates();
 
-        static Coordinates toLocal(double x, double y, double ref_x, double ref_y,
-                                   double ref_angle);
+    static Coordinates toGlobal(double x, double y, double ref_x, double ref_y,
+                                double ref_angle);
 
-        Coordinates toGlobal(double ref_x, double ref_y, double ref_angle) const;
+    static Coordinates toLocal(double x, double y, double ref_x, double ref_y,
+                               double ref_angle);
 
-        Coordinates toLocal(double ref_x, double ref_y, double ref_angle) const;
+    Coordinates toGlobal(double ref_x, double ref_y, double ref_angle) const;
 
-        double x() const {
-            return x_;
-        }
+    Coordinates toLocal(double ref_x, double ref_y, double ref_angle) const;
 
-        double y() {
-            return y_;
-        }
+    double x() const {
+        return x_;
+    }
 
-    private:
-        double x_;
-        double y_;
-    };
-}
+    double y() const {
+        return y_;
+    }
+
+private:
+    double x_;
+    double y_;
+};
+
+} // namespace cartesian

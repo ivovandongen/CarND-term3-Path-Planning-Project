@@ -4,7 +4,9 @@
 
 namespace util {
 
-inline long long int unix_ts() {
+using timestamp = long long int;
+
+inline timestamp unix_ts() {
     using namespace std::chrono;
     milliseconds ms = duration_cast<milliseconds>(
             system_clock::now().time_since_epoch()

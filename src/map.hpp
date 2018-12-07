@@ -40,6 +40,16 @@ public:
     std::vector<double> getFrenet(double x, double y, double theta) const;
 
     /**
+     * Transform from Cartesian x,y and acc (vx,vy) coordinates to Frenet s_dot,d_dot
+     * @param x
+     * @param y
+     * @param vx
+     * @param vy
+     * @return
+     */
+    std::vector<double> getFrenetDot(double x, double y, double vx, double vy) const;
+
+    /**
      * Transform from Frenet s,d coordinates to Cartesian x,y
      * @param s
      * @param d

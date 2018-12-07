@@ -1,26 +1,41 @@
 #pragma once
 
-#include "vehicle.hpp"
+#include <coordinates.hpp>
+#include <vehicle.hpp>
+#include <util/time.hpp>
 
-#include <ostream>
 #include <memory>
 #include <vector>
 
 namespace prediction {
 
-struct Predictions {
-    bool free_left;
-    bool free_ahead;
-    bool free_right;
-
-    std::unique_ptr<Vehicle> ahead;
+struct Waypoint {
+    util::timestamp ts;
+    Vehicle state;
 };
 
-Predictions predictions(const Map &, const Vehicle &ego, const std::vector<Vehicle> &traffic, double t);
+struct Trajectory {
+    double probability;
+    std::vector<Waypoint> trajectory;
+};
 
-inline std::ostream &operator<<(std::ostream &stream, const Predictions &p) {
-    return stream << "Predictions(left:" << p.free_left << ", ahead:" << p.free_ahead << " ,right:" << p.free_right
-                  << ")";
-}
+struct Prediction {
+    int vehicle_id;
+    double length;
+    double width;
+    std::vector<Trajectory> trajectories;
+};
+
+using Predictions = std::vector<Prediction>;
+
+/**
+ * Take the sensor fusion data and predict rough trajectories with probabilities.
+ * @param sensor_fusion the parsed sensor fusion data
+ * @param t the timespan for the trajectories
+ * @return Predictions
+ */
+Predictions predictions(const Map &, const std::vector<Vehicle> &sensor_fusion, double t);
 
 } // namespace prediction
+
+
