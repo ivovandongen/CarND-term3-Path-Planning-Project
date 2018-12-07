@@ -9,7 +9,9 @@
 #include <util/conversion.hpp>
 #include <util/time.hpp>
 
-#include <iostream>
+#include <tl/optional.hpp>
+
+#include <array>
 
 namespace behaviour {
 
@@ -52,10 +54,6 @@ public:
         return ts_;
     }
 
-    int targetVehicle() const {
-        return target_vehicle_;
-    }
-
 private:
     Action action_;
     long long int ts_;
@@ -63,7 +61,6 @@ private:
 
     // Optional
     int lane_ = -1;
-    int target_vehicle_ = -1;
 };
 
 class Behaviour {
@@ -72,21 +69,31 @@ public:
 
     virtual ~Behaviour() = default;
 
-    State nextState(const Vehicle &ego, const std::vector<Vehicle> &traffic, const prediction::Predictions &);
+    State nextState(const Vehicle &ego, const prediction::Predictions &);
 
 private:
 
     bool transitioning(const Vehicle &vehicle);
 
-    std::vector<Action> successions();
+    std::vector<Action> successions(const Vehicle &vehicle);
+
+    using Trajectory = std::vector<Vehicle>;
+
+    Trajectory generateTrajectory(Action state, const Vehicle &ego, const prediction::Predictions &);
+
+    Trajectory keepLaneTrajectory(const Vehicle &ego, const prediction::Predictions &predictions);
+
+    using Kinematics = std::array<double, 3>;
+
+    Behaviour::Kinematics getKinematics(const Vehicle &ego, const prediction::Predictions &predictions);
+
+    tl::optional <Vehicle> getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions);
+
+    tl::optional <Vehicle> getVehicleBehind(const Vehicle &ego, const prediction::Predictions &predictions);
 
     const Map &map_;
     State previous_state_;
 
 };
-
-std::ostream &operator<<(std::ostream &stream, const Action &action);
-
-std::ostream &operator<<(std::ostream &stream, const State &state);
 
 } // namespace behaviour

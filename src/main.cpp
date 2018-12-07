@@ -7,9 +7,14 @@
 #include <trigonometry.hpp>
 #include <vehicle.hpp>
 #include <util/conversion.hpp>
+#include <fmt/behaviour.hpp>
+#include <fmt/coordinates.hpp>
+#include <fmt/prediction.hpp>
+#include <fmt/collections.hpp>
 
 #include <uWS.h>
 #include <json.hpp>
+#include <fmt/printf.h>
 
 #include <cassert>
 #include <cmath>
@@ -121,17 +126,17 @@ int main() {
                     std::vector<Vehicle> traffic = parseSensorFusionData(sensor_fusion);
 
                     // Get predictions
-                    auto predictions = prediction::predictions(map, ego, traffic, 5);
+                    auto predictions = prediction::predictions(map, traffic, 5);
 
                     // Get target behaviour (throttles internally)
-                    auto targetState = behaviour.nextState(ego, traffic, predictions);
+                    auto targetState = behaviour.nextState(ego, predictions);
 
-                    std::cout << "Position: s:" << ego.s() << " d:" << ego.d() << std::endl;
-                    std::cout << predictions << std::endl;
-                    if (!predictions.free_ahead) {
-                        std::cout << "Distance to car: " << predictions.ahead->s() - ego.s() << std::endl;
-                    }
-                    std::cout << "Target state: " << targetState << std::endl;
+                    fmt::print("Position: s:{} d:{}\n", ego.s(), ego.d());
+//                    fmt::print("Predictions: {}\n", predictions);
+//                    if (!predictions.free_ahead) {
+//                        std::cout << "Distance to car: " << predictions.ahead->s() - ego.s() << std::endl;
+//                    }
+                    fmt::print("Target state: {}\n", targetState);
 
                     std::cout << std::endl;
 

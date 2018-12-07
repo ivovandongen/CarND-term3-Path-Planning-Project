@@ -137,6 +137,17 @@ std::vector<double> Map::getFrenet(double x, double y, double theta) const {
     return {frenet_s, frenet_d};
 }
 
+std::vector<double> Map::getFrenetDot(double x, double y, double vx, double vy) const {
+    auto wp = closestWaypoint(x, y);
+    double dx = maps_dx[wp];
+    double dy = maps_dy[wp];
+
+    double d_dot = (vx * dx + vy * dy);
+    double s_dot = sqrt(vx * vx + vy * vy - d_dot * d_dot);
+
+    return {s_dot, d_dot};
+}
+
 // Transform from Frenet s,d coordinates to Cartesian x,y
 std::vector<double> Map::getXY(double s, double d) const {
     int prev_wp = -1;
