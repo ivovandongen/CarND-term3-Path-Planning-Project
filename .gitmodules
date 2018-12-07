@@ -25,3 +25,6 @@
 [submodule "deps/fmt"]
 	path = deps/fmt
 	url = git@github.com:fmtlib/fmt.git
+[submodule "deps/tl-optional"]
+	path = deps/tl-optional
+	url = git@github.com:TartanLlama/optional.git
