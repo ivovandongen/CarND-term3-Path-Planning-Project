@@ -79,9 +79,10 @@ int main() {
     behaviour::Behaviour behaviour(map);
 
     // Some state
+    behaviour::State previousState(behaviour::Action::INIT);
     double ref_vel = 0;
 
-    h.onMessage([&map, &behaviour, &ref_vel](
+    h.onMessage([&map, &behaviour, &ref_vel, &previousState](
             uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
             uWS::OpCode opCode) {
         // "42" at the start of the message means there's a websocket message event.
@@ -131,16 +132,18 @@ int main() {
                     // Get target behaviour (throttles internally)
                     auto targetState = behaviour.nextState(ego, predictions);
 
-                    fmt::print("Position: s:{} d:{}\n", ego.s(), ego.d());
-//                    fmt::print("Predictions: {}\n", predictions);
-//                    if (!predictions.free_ahead) {
-//                        std::cout << "Distance to car: " << predictions.ahead->s() - ego.s() << std::endl;
-//                    }
-                    fmt::print("Target state: {}\n", targetState);
+                    // Some debug logging
+                    if (previousState.action() != targetState.action() ||
+                        previousState.speed() != targetState.speed()) {
 
-                    std::cout << std::endl;
+                        fmt::print("Position: s:{} d:{}\n", ego.s(), ego.d());
+                        fmt::print("Predictions: {}\n", predictions);
+                        fmt::print("Target state: {}\n", targetState);
+                        std::cout << std::endl;
+                    }
 
 
+                    // Calculate trajectory
                     trajectory::Path path = trajectory::calculatePath(map,
                                                                       ego,
                                                                       ref_vel,
@@ -150,7 +153,9 @@ int main() {
 
                     // Store state for next iteration
                     ref_vel = path.target_v;
+                    previousState = targetState;
 
+                    // Return message
                     json msgJson;
                     msgJson["next_x"] = path.x_vals;
                     msgJson["next_y"] = path.y_vals;
