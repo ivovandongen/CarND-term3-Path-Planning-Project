@@ -54,19 +54,17 @@ vector<Vehicle> parseSensorFusionData(json &json) {
         // 4 car's y velocity in m/s,
         // 5 car's s position in frenet coordinates,
         // 6 car's d position in frenet coordinates.
-        vehicles.emplace_back(
-                data[0],
-                data[1],
-                data[2],
-                data[5],
-                data[6],
-                0., // TODO: calculate yaw
-                data[3],
-                data[4]
+        // TODO: calculate yaw?
+        vehicles.push_back(
+                VehicleBuilder::newBuilder((int) data[0])
+                        .withS(data[5])
+                        .withD(data[6])
+                        .withV(data[3], data[4])
+                        .withCoordinates({data[1], data[2]})
+                        .build()
         );
     }
-
-
+    
     return vehicles;
 }
 
@@ -121,7 +119,13 @@ int main() {
                     auto sensor_fusion = j[1]["sensor_fusion"];
 
                     // The ego car state
-                    Vehicle ego{Vehicle::EGO_ID, car_x, car_y, car_s, car_d, car_yaw, car_speed_ms};
+                    Vehicle ego = VehicleBuilder::newEgoBuilder()
+                            .withS(car_s)
+                            .withD(car_d)
+                            .withYaw(car_yaw)
+                            .withV(car_speed_ms)
+                            .withCoordinates({car_x, car_y})
+                            .build();
 
                     // Parse sensor fusion data
                     std::vector<Vehicle> traffic = parseSensorFusionData(sensor_fusion);

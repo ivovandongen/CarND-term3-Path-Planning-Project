@@ -81,13 +81,14 @@ Behaviour::generateTrajectory(Action action, const Vehicle &ego, const predictio
  */
 Behaviour::Trajectory Behaviour::keepLaneTrajectory(const Vehicle &ego, const prediction::Predictions &predictions) {
     std::vector<Vehicle> trajectory = {ego};
-    Behaviour::Kinematics kinematics = getKinematics(ego, predictions);
-    double new_s = kinematics[0];
-    double new_v = kinematics[1];
-    double new_a = kinematics[2];
-    // TODO: a
-    auto xy = map_.getXY(new_s, ego.d());
-    trajectory.emplace_back(ego.id(), xy[0], xy[1], new_s, ego.d(), ego.yaw(), new_v);
+    Behaviour::Kinematics kinematics = getKinematics(ego, predictions, ego.lane());
+    trajectory.push_back(
+            VehicleBuilder::newBuilder(ego)
+                    .withS(kinematics.s)
+                    .withV(kinematics.v)
+                            // TODO: a
+                    .build());
+    return trajectory;
     return trajectory;
 }
 
