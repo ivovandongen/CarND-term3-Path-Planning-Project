@@ -12,7 +12,7 @@ struct fmt::formatter<Vehicle> {
     template<typename FormatContext>
     auto format(const Vehicle &v, FormatContext &ctx) {
         return format_to(ctx.out(),
-                         "(id: {}, s:{}, d:{}, v:{})",
+                         "(id:{}, lane:{}, s:{}, d:{}, v:{})",
                          v.id(),
                          v.lane(),
                          v.s(),

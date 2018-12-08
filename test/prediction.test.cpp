@@ -25,13 +25,16 @@ TEST(Prediction, TestPredictions) {
                                 {
                                         1.0,
                                         std::vector<Waypoint>{
-                                                {1001, Vehicle{1, 1., 1., 1., 1., 1., 1.}}
+                                                {1001, VehicleBuilder::newEgoBuilder().build()}
                                         }
                                 }
                         }
                        });
     std::vector<Vehicle> sensorFusion{
-            Vehicle{1, 784.6001, 1135.571, 0., 0., 0., 20.}
+            VehicleBuilder::newBuilder(1)
+                    .withV(20)
+                    .withCoordinates({84.6001, 1135.571})
+                    .build()
     };
     auto actual = predictions(map, sensorFusion, 5);
 
@@ -47,12 +50,21 @@ TEST(Prediction, FMT) {
                            std::vector<Trajectory>{
                                    {
                                            1.0,
-                                           std::vector<Waypoint>{{1001, Vehicle{1, 2., 3., 4., 5., 6., 7.}}}
+                                           std::vector<Waypoint>{
+                                                   {
+                                                           1001,
+                                                           VehicleBuilder::newBuilder(1)
+                                                                   .withS(1)
+                                                                   .withD(4)
+                                                                   .withV(5)
+                                                                   .build()
+                                                   }
+                                           }
                                    }
                            }
                           });
     std::string s = fmt::format("{}", predictions);
     ASSERT_EQ(
-            "{(Vehicle: 1, size: 4x4, trajectories: {(probability: 1, trajectory: {(ts: 1001, state: (id: 1, s:1, d:4, v:5))})})}",
+            "{(Vehicle: 1, size: 4x4, trajectories: {(probability: 1, trajectory: {(ts: 1001, state: (id:1, lane:1, s:1, d:4, v:5))})})}",
             s);
 }

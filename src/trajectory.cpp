@@ -30,21 +30,22 @@ Path calculatePath(const Map &map, const Vehicle &ego,
     std::vector<double> way_pts_y;
 
     // Reference state
-    double ref_x = ego.x();
-    double ref_y = ego.y();
+    auto coordinates = ego.coordinates(map);
+    double ref_x = coordinates.x();
+    double ref_y = coordinates.y();
     double ref_yaw = deg2rad(ego.yaw());
 
     if (prev_size < 2) {
         // Not enough previous path points to use as a reference, use
         // the car position and yaw to get the initial points
-        double prev_car_x = ego.x() - cos(ego.yaw());
-        double prev_car_y = ego.y() - sin(ego.yaw());
+        double prev_car_x = ref_x - cos(ego.yaw());
+        double prev_car_y = ref_y - sin(ego.yaw());
 
         way_pts_x.push_back(prev_car_x);
-        way_pts_x.push_back(ego.x());
+        way_pts_x.push_back(ref_x);
 
         way_pts_y.push_back(prev_car_y);
-        way_pts_y.push_back(ego.y());
+        way_pts_y.push_back(ref_y);
     } else {
         // Use the end of the remaining previous path
         // to start off the next point calculations
