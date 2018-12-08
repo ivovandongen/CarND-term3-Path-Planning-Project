@@ -6,11 +6,23 @@
 #include <util/conversion.hpp>
 #include <util/time.hpp>
 
+#include <cmath>
 #include <limits>
 #include <map>
 
 namespace behaviour {
 
+int laneDirection(Action action) {
+    switch (action) {
+        case Action::CHANGE_LANE_LEFT:
+            return -1;
+        case Action::CHANGE_LANE_RIGHT:
+            return 1;
+        default:
+            assert(false);
+            return 0;
+    }
+}
 
 Behaviour::Behaviour(const Map &map)
         : map_(map), previous_state_({}) {
@@ -69,8 +81,8 @@ Behaviour::generateTrajectory(Action action, const Vehicle &ego, const predictio
             trajectory = keepLaneTrajectory(ego, predictions);
             break;
         case Action::CHANGE_LANE_LEFT:
-            break;
         case Action::CHANGE_LANE_RIGHT:
+            trajectory = changeLaneTrajectory(ego, action, predictions);
             break;
     }
     return trajectory;
@@ -89,11 +101,45 @@ Behaviour::Trajectory Behaviour::keepLaneTrajectory(const Vehicle &ego, const pr
                             // TODO: a
                     .build());
     return trajectory;
+}
+
+Behaviour::Trajectory
+Behaviour::changeLaneTrajectory(const Vehicle &ego, Action action, const prediction::Predictions &predictions) {
+    /*
+    Generate a lane change trajectory.
+    */
+    int targetLane = ego.lane() + laneDirection(action);
+    std::vector<Vehicle> trajectory;
+    //Check if a lane change is possible (check if another vehicle occupies that spot).
+    for (const prediction::Prediction &prediction:predictions) {
+        // TODO: Alternative trajectories?
+        for (const prediction::Waypoint &waypoint : prediction.trajectories[0].trajectory) {
+            // TODO: t
+            const Vehicle &vehicle = waypoint.state;
+            // TODO: overlap
+            if (std::abs(vehicle.s() - ego.s()) < 10 && vehicle.lane() == targetLane) {
+                //If lane change is not possible, return empty trajectory.
+                return trajectory;
+            }
+        }
+    }
+
+    trajectory.push_back(ego);
+
+    Kinematics kinematics = getKinematics(ego, predictions, targetLane);
+    trajectory.push_back(
+            VehicleBuilder::newBuilder(ego)
+                    .withS(kinematics.s)
+                    .withD(targetLane * LANE_WIDTH + LANE_WIDTH / 2.)
+                    .withV(kinematics.v)
+                            // TODO: a
+                    .build());
     return trajectory;
 }
 
 
-Behaviour::Kinematics Behaviour::getKinematics(const Vehicle &ego, const prediction::Predictions &predictions) {
+Behaviour::Kinematics
+Behaviour::getKinematics(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane) {
     /*
     Gets next timestep kinematics (position, velocity, acceleration)
     for a given lane. Tries to choose the maximum velocity and acceleration,
@@ -104,10 +150,10 @@ Behaviour::Kinematics Behaviour::getKinematics(const Vehicle &ego, const predict
     double new_velocity;
     double new_accel;
 
-    auto vehicleAhead = getVehicleAhead(ego, predictions);
+    auto vehicleAhead = getVehicleAhead(ego, predictions, targetLane);
     //TODO: determine sensor range
     if (vehicleAhead && vehicleAhead->s() - ego.s() < 40) {
-        auto vehicleBehind = getVehicleBehind(ego, predictions);
+        auto vehicleBehind = getVehicleBehind(ego, predictions, targetLane);
         if (vehicleBehind) {
             new_velocity = vehicleAhead->v(); //must travel at the speed of traffic, regardless of preferred buffer
         } else {
@@ -127,16 +173,17 @@ Behaviour::Kinematics Behaviour::getKinematics(const Vehicle &ego, const predict
 
 }
 
-tl::optional <Vehicle> Behaviour::getVehicleBehind(const Vehicle &ego, const prediction::Predictions &predictions) {
+tl::optional<Vehicle>
+Behaviour::getVehicleBehind(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane) {
     /*
     Returns a true if a vehicle is found behind the current vehicle, false otherwise. The passed reference
     rVehicle is updated if a vehicle is found.
     */
     double max_s = -1;
-    tl::optional <Vehicle> found{};
+    tl::optional<Vehicle> found{};
     for (const prediction::Prediction &prediction: predictions) {
         auto &vehicle = prediction.trajectories[0].trajectory[0].state;
-        if (vehicle.lane() == ego.lane() && vehicle.s() < ego.s() && vehicle.s() > max_s) {
+        if (vehicle.lane() == targetLane && vehicle.s() < ego.s() && vehicle.s() > max_s) {
             max_s = vehicle.s();
             found = vehicle;
         }
@@ -144,16 +191,17 @@ tl::optional <Vehicle> Behaviour::getVehicleBehind(const Vehicle &ego, const pre
     return found;
 }
 
-tl::optional <Vehicle> Behaviour::getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions) {
+tl::optional<Vehicle>
+Behaviour::getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane) {
     /*
     Returns a true if a vehicle is found ahead of the current vehicle, false otherwise. The passed reference
     rVehicle is updated if a vehicle is found.
     */
     double min_s = std::numeric_limits<double>::max();
-    tl::optional <Vehicle> found{};
+    tl::optional<Vehicle> found{};
     for (const prediction::Prediction &prediction: predictions) {
         auto &vehicle = prediction.trajectories[0].trajectory[0].state;
-        if (vehicle.lane() == ego.lane() && vehicle.s() > ego.s() && vehicle.s() < min_s) {
+        if (vehicle.lane() == targetLane && vehicle.s() > ego.s() && vehicle.s() < min_s) {
             min_s = vehicle.s();
             found = vehicle;
         }

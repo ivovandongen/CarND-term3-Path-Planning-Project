@@ -83,13 +83,21 @@ private:
 
     Trajectory keepLaneTrajectory(const Vehicle &ego, const prediction::Predictions &predictions);
 
-    using Kinematics = std::array<double, 3>;
+    Trajectory changeLaneTrajectory(const Vehicle &ego, Action action, const prediction::Predictions &predictions);
 
-    Behaviour::Kinematics getKinematics(const Vehicle &ego, const prediction::Predictions &predictions);
+    struct Kinematics {
+        double s;
+        double v;
+        double a;
+    };
 
-    tl::optional <Vehicle> getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions);
+    Behaviour::Kinematics getKinematics(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane);
 
-    tl::optional <Vehicle> getVehicleBehind(const Vehicle &ego, const prediction::Predictions &predictions);
+    tl::optional<Vehicle>
+    getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane);
+
+    tl::optional<Vehicle>
+    getVehicleBehind(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane);
 
     const Map &map_;
     State previous_state_;
