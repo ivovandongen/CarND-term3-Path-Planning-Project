@@ -25,6 +25,7 @@ add_library(core STATIC
         ${CMAKE_SOURCE_DIR}/src/fmt/collections.hpp
         ${CMAKE_SOURCE_DIR}/src/fmt/coordinates.hpp
         ${CMAKE_SOURCE_DIR}/src/fmt/prediction.hpp
+        ${CMAKE_SOURCE_DIR}/src/util/algorithm.hpp
         ${CMAKE_SOURCE_DIR}/src/util/collections.hpp
         ${CMAKE_SOURCE_DIR}/src/util/conversion.hpp
         ${CMAKE_SOURCE_DIR}/src/util/time.hpp

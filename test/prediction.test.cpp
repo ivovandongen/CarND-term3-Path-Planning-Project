@@ -20,7 +20,7 @@ TEST(Prediction, TestPredictions) {
     auto map = Map::loadFromFile("../../data/highway_map.csv");
 
     Predictions expected;
-    expected.push_back({1, 4, 4,
+    expected.push_back({1,
                         std::vector<Trajectory>{
                                 {
                                         1.0,
@@ -36,7 +36,7 @@ TEST(Prediction, TestPredictions) {
                     .withCoordinates({84.6001, 1135.571})
                     .build()
     };
-    auto actual = predictions(map, sensorFusion, 5);
+    auto actual = predictions(map, sensorFusion, 5, .5);
 
     ASSERT_EQ(1, actual.size());
     ASSERT_EQ(1, actual[0].trajectories.size());
@@ -46,7 +46,7 @@ TEST(Prediction, TestPredictions) {
 
 TEST(Prediction, FMT) {
     Predictions predictions;
-    predictions.push_back({1, 4, 4,
+    predictions.push_back({1,
                            std::vector<Trajectory>{
                                    {
                                            1.0,
@@ -65,6 +65,6 @@ TEST(Prediction, FMT) {
                           });
     std::string s = fmt::format("{}", predictions);
     ASSERT_EQ(
-            "{(Vehicle: 1, size: 4x4, trajectories: {(probability: 1, trajectory: {(ts: 1001, state: (id:1, lane:1, s:1, d:4, v:5))})})}",
+            "{(Vehicle: 1, trajectories: {(probability: 1, trajectory: {(ts: 1001, state: (id:1, lane:1, s:1, d:4, v:5))})})}",
             s);
 }

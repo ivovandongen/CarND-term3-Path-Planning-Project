@@ -46,10 +46,8 @@ struct fmt::formatter<prediction::Prediction> {
     auto format(const prediction::Prediction &p, FormatContext &ctx) {
         using namespace prediction;
         return format_to(ctx.out(),
-                         "(Vehicle: {}, size: {}x{}, trajectories: {})",
+                         "(Vehicle: {}, trajectories: {})",
                          p.vehicle_id,
-                         p.width,
-                         p.length,
                          p.trajectories
         );
     }

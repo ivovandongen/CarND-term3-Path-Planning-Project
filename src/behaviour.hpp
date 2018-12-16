@@ -24,30 +24,15 @@ enum class Action {
 
 class State {
 public:
-    explicit State(Action action)
-            : action_(action), ts_(util::unix_ts()), speed_(util::mphToMs(MAX_VELOCITY_MPH)) {}
+    State(Action action, const Vehicle &target)
+            : action_(action), target_(target), ts_(util::unix_ts()) {}
 
-    // TODO: Trajectory constraints?
     Action action() const {
         return action_;
     };
 
-    int lane() const {
-        return lane_;
-    }
-
-    double speed() const {
-        return speed_;
-    }
-
-    State &withLane(int lane) {
-        lane_ = lane;
-        return *this;
-    }
-
-    State &withSpeed(double speed) {
-        speed_ = speed;
-        return *this;
+    const Vehicle &target() const {
+        return target_;
     }
 
     long ts() const {
@@ -56,11 +41,8 @@ public:
 
 private:
     Action action_;
+    Vehicle target_;
     long long int ts_;
-    double speed_;
-
-    // Optional
-    int lane_ = -1;
 };
 
 class Behaviour {
@@ -70,6 +52,10 @@ public:
     virtual ~Behaviour() = default;
 
     State nextState(const Vehicle &ego, const prediction::Predictions &);
+
+    const State& state() const {
+        return previous_state_;
+    }
 
 private:
 
@@ -85,13 +71,15 @@ private:
 
     Trajectory changeLaneTrajectory(const Vehicle &ego, Action action, const prediction::Predictions &predictions);
 
+    Trajectory generateRoughTrajectory(const Vehicle &ego, const Vehicle &target, double t, double interval);
+
     struct Kinematics {
         double s;
         double v;
         double a;
     };
 
-    Behaviour::Kinematics getKinematics(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane);
+    Behaviour::Kinematics getKinematics(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane, double t = 5);
 
     tl::optional<Vehicle>
     getVehicleAhead(const Vehicle &ego, const prediction::Predictions &predictions, int targetLane);

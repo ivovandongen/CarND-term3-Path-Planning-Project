@@ -64,7 +64,7 @@ vector<Vehicle> parseSensorFusionData(json &json) {
                         .build()
         );
     }
-    
+
     return vehicles;
 }
 
@@ -77,7 +77,7 @@ int main() {
     behaviour::Behaviour behaviour(map);
 
     // Some state
-    behaviour::State previousState(behaviour::Action::INIT);
+    behaviour::State previousState = behaviour.state();
     double ref_vel = 0;
 
     h.onMessage([&map, &behaviour, &ref_vel, &previousState](
@@ -131,14 +131,14 @@ int main() {
                     std::vector<Vehicle> traffic = parseSensorFusionData(sensor_fusion);
 
                     // Get predictions
-                    auto predictions = prediction::predictions(map, traffic, 5);
+                    auto predictions = prediction::predictions(map, traffic, 5, .5);
 
                     // Get target behaviour (throttles internally)
                     auto targetState = behaviour.nextState(ego, predictions);
 
                     // Some debug logging
                     if (previousState.action() != targetState.action() ||
-                        previousState.speed() != targetState.speed()) {
+                        previousState.target().v() != targetState.target().v()) {
 
                         fmt::print("Position: s:{} d:{}\n", ego.s(), ego.d());
                         fmt::print("Predictions: {}\n", predictions);
@@ -148,25 +148,28 @@ int main() {
 
 
                     // Calculate trajectory
-                    trajectory::Path path = trajectory::calculatePath(map,
-                                                                      ego,
-                                                                      ref_vel,
-                                                                      targetState,
-                                                                      previous_path_x,
-                                                                      previous_path_y);
+                    trajectory::Trajectory previousPath{
+                            std::move(previous_path_x),
+                            std::move(previous_path_y)
+                    };
+
+                    trajectory::Trajectory path = trajectory::calculateTrajectory(map,
+                                                                                  ego,
+                                                                                  targetState,
+                                                                                  previousPath,
+                                                                                  TRAJECTORY_POINTS
+                                                                                  );
 
                     // Store state for next iteration
-                    ref_vel = path.target_v;
                     previousState = targetState;
 
                     // Return message
                     json msgJson;
-                    msgJson["next_x"] = path.x_vals;
-                    msgJson["next_y"] = path.y_vals;
+                    msgJson["next_x"] = path.x;
+                    msgJson["next_y"] = path.y;
 
                     auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
-                    //this_thread::sleep_for(chrono::milliseconds(1000));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 
                 }

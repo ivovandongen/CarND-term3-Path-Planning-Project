@@ -11,10 +11,6 @@ class Vehicle {
 public:
     const static int EGO_ID = -1;
 
-    Vehicle(int id, double s, double d, double yaw, double v);
-
-    Vehicle(int id, double s, double d, double yaw, double vx, double vy);
-
     virtual ~Vehicle() = default;
 
     int id() const {
@@ -37,11 +33,17 @@ public:
         return v_;
     }
 
+    double a() const {
+        return a_;
+    }
+
     tl::optional<cartesian::Coordinates> coordinates() const {
         return coordinates_;
     }
 
     cartesian::Coordinates coordinates(const Map &) const;
+
+    cartesian::Coordinates coordinates(const Map &map);
 
     void coordinates(cartesian::Coordinates coordinates) {
         coordinates_ = coordinates;
@@ -62,6 +64,7 @@ private:
     double d_{};
     double yaw_{};
     double v_{};
+    double a_{};
     tl::optional<cartesian::Coordinates> coordinates_;
 };
 
@@ -82,6 +85,8 @@ public:
     VehicleBuilder &withV(double v);
 
     VehicleBuilder &withV(double vx, double vy);
+
+    VehicleBuilder &withA(double a);
 
     VehicleBuilder &withCoordinates(cartesian::Coordinates coordinates);
 
