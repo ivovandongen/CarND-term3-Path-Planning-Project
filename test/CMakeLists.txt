@@ -10,6 +10,7 @@ add_executable(utest
     ${TEST_DIR}/coordinates.test.cpp
     ${TEST_DIR}/map.test.cpp
     ${TEST_DIR}/prediction.test.cpp
+    ${TEST_DIR}/trajectory.test.cpp
     ${TEST_DIR}/util/conversion.test.cpp
 )
 

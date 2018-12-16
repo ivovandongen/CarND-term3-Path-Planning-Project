@@ -4,6 +4,8 @@ namespace cartesian {
 
 class Coordinates {
 public:
+    Coordinates() = default;
+
     Coordinates(double x, double y);
 
     virtual ~Coordinates();
@@ -27,8 +29,8 @@ public:
     }
 
 private:
-    double x_;
-    double y_;
+    double x_{};
+    double y_{};
 };
 
 } // namespace cartesian

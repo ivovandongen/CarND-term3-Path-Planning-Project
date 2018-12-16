@@ -8,27 +8,15 @@ inline double velocity(double vx, double vy) {
     return sqrt(vx * vx + vy * vy);
 }
 
-Vehicle::Vehicle(int id, double s, double d, double yaw, double v)
-        : id_(id), s_(s), d_(d), yaw_(yaw), v_(v) {
-}
-
-Vehicle::Vehicle(int id, double s, double d, double yaw, double vx, double vy)
-        : id_(id), s_(s), d_(d), yaw_(yaw), v_(velocity(vx, vy)) {
-}
-
 int Vehicle::lane() const {
     return int(d() / LANE_WIDTH);
 }
 
 Vehicle Vehicle::stateIn(const Map &map, double secs) const {
     double newS = s_ + (v_ * secs);
-
-    auto builder = VehicleBuilder::newBuilder(*this);
-    if (coordinates_) {
-        auto xy = map.getXY(newS, d_);
-        builder.withCoordinates({xy[0], xy[1]});
-    }
-    return builder.withS(newS).build();
+    return VehicleBuilder::newBuilder(*this)
+            .withS(newS)
+            .build();
 }
 
 cartesian::Coordinates Vehicle::coordinates(const Map &map) const {
@@ -38,6 +26,14 @@ cartesian::Coordinates Vehicle::coordinates(const Map &map) const {
         auto xy = map.getXY(s_, d_);
         return {xy[0], xy[1]};
     }
+}
+
+cartesian::Coordinates Vehicle::coordinates(const Map &map) {
+    if (!coordinates_) {
+        auto xy = map.getXY(s_, d_);
+        coordinates_ = cartesian::Coordinates{xy[0], xy[1]};
+    }
+    return *coordinates_;
 }
 
 VehicleBuilder VehicleBuilder::newEgoBuilder() {
@@ -77,6 +73,11 @@ VehicleBuilder &VehicleBuilder::withV(double v) {
 
 VehicleBuilder &VehicleBuilder::withV(double vx, double vy) {
     vehicle_.v_ = velocity(vx, vy);
+    return *this;
+}
+
+VehicleBuilder &VehicleBuilder::withA(double a) {
+    vehicle_.a_ = a;
     return *this;
 }
 

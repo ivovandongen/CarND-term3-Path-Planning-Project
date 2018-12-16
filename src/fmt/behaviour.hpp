@@ -1,6 +1,7 @@
 #pragma once
 
 #include <behaviour.hpp>
+#include <fmt/vehicle.hpp>
 
 #include <fmt/format.h>
 
@@ -34,11 +35,10 @@ struct fmt::formatter<behaviour::State> {
     auto format(const behaviour::State &s, FormatContext &ctx) {
         using namespace behaviour;
         return format_to(ctx.out(),
-                         "(Action: {}, time: {}, speed: {}mph, lane: {})",
+                         "(Action: {}, time: {}, target: {})",
                          s.action(),
                          s.ts(),
-                         util::msToMph(s.speed()),
-                         s.lane()
+                         s.target()
         );
     }
 };
