@@ -11,6 +11,7 @@ add_executable(utest
     ${TEST_DIR}/map.test.cpp
     ${TEST_DIR}/prediction.test.cpp
     ${TEST_DIR}/trajectory.test.cpp
+    ${TEST_DIR}/vehicle.test.cpp
     ${TEST_DIR}/util/algorithm.test.cpp
     ${TEST_DIR}/util/conversion.test.cpp
 )

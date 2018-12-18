@@ -1,9 +1,13 @@
 #pragma once
 
+#include <constants.hpp>
 #include <coordinates.hpp>
 #include <map.hpp>
+#include <util/algorithm.hpp>
 
 #include <tl/optional.hpp>
+
+#include <cmath>
 
 class VehicleBuilder;
 
@@ -50,6 +54,14 @@ public:
     }
 
     int lane() const;
+
+    bool isInFrontOf(const Vehicle &other) const {
+        return util::in_front(s_, other.s(), MAX_S);
+    }
+
+    bool isBehindOf(const Vehicle &other) const {
+        return !isInFrontOf(other);
+    }
 
     Vehicle stateIn(const Map &, double secs) const;
 

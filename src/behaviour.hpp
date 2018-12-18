@@ -71,8 +71,6 @@ private:
 
     Trajectory changeLaneTrajectory(const Vehicle &ego, Action action, const prediction::Predictions &predictions);
 
-    Trajectory generateRoughTrajectory(const Vehicle &ego, const Vehicle &target, double t, double interval);
-
     struct Kinematics {
         double s;
         double v;

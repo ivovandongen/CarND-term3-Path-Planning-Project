@@ -69,6 +69,9 @@ vector<Vehicle> parseSensorFusionData(json &json) {
 }
 
 int main() {
+    // Some static assertions
+    assert(std::abs(MAX_VELOCITY_MS - util::mphToMs(MAX_VELOCITY_MPH)) < .1);
+
     uWS::Hub h;
 
     // Read waypoint map

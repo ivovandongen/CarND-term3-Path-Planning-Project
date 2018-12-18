@@ -75,6 +75,100 @@ TEST(Behaviour, Successions) {
               (std::vector<Action>{Action::KEEP_LANE, Action::CHANGE_LANE_LEFT}));
 }
 
+TEST(Behaviour, CarAheadMaxS) {
+    Behaviour behaviour{emptyMap()};
+
+    auto ego = VehicleBuilder::newEgoBuilder()
+            .withV(10)
+            .withS(MAX_S - 5)
+            .withD(LANE_WIDTH / 2.)
+            .build();
+
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v())
+            .withS(5)
+            .withD(ego.d())
+            .build();
+
+    auto carInFrontOfThat = VehicleBuilder::newBuilder(2)
+            .withV(carInFront.v())
+            .withS(carInFront.s() + 5)
+            .withD(carInFront.d())
+            .build();
+
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }},
+            prediction::Prediction{carInFrontOfThat.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFrontOfThat}
+                            }
+                    }
+            }}
+    };
+
+
+    auto vehicleAhead = behaviour.getVehicleAhead(ego, predictions, ego.lane());
+    ASSERT_TRUE(vehicleAhead);
+    ASSERT_EQ(vehicleAhead->id(), carInFront.id());
+}
+
+TEST(Behaviour, CarBehindMaxS) {
+    Behaviour behaviour{emptyMap()};
+
+    auto ego = VehicleBuilder::newEgoBuilder()
+            .withV(10)
+            .withS(5)
+            .withD(LANE_WIDTH / 2.)
+            .build();
+
+    auto carBehind = VehicleBuilder::newBuilder(1)
+            .withV(ego.v())
+            .withS(MAX_S - 5)
+            .withD(ego.d())
+            .build();
+
+    auto carBehindThat = VehicleBuilder::newBuilder(2)
+            .withV(carBehind.v())
+            .withS(carBehind.s() - 5)
+            .withD(carBehind.d())
+            .build();
+
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carBehind.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carBehind}
+                            }
+                    }
+            }},
+            prediction::Prediction{carBehindThat.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carBehindThat}
+                            }
+                    }
+            }}
+    };
+
+
+    auto vehicleBehind = behaviour.getVehicleBehind(ego, predictions, ego.lane());
+    ASSERT_TRUE(vehicleBehind);
+    ASSERT_EQ(vehicleBehind->id(), carBehind.id());
+}
+
 TEST(Behaviour, KinematicsFreeFlow) {
     Behaviour behaviour{emptyMap()};
 
@@ -191,60 +285,84 @@ TEST(Behaviour, KinematicsCarAheadDecceleration) {
     ASSERT_NEAR(kinematics.a, -1, .1);
 }
 
-TEST(Behaviour, GenerateRoughTrajectoryKeepLane) {
+TEST(Behaviour, KinematicsCarAheadMaxS) {
     Behaviour behaviour{emptyMap()};
 
-
     auto ego = VehicleBuilder::newEgoBuilder()
-            .withS(0)
+            .withV(10)
+            .withS(MAX_S - 5)
             .withD(LANE_WIDTH / 2.)
-            .withV(10)
-            .withYaw(0)
             .build();
 
-    auto target = VehicleBuilder::newEgoBuilder()
-            .withS(25)
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v() - 2)
+            .withS(5)
             .withD(ego.d())
-            .withV(10)
-            .withYaw(0)
             .build();
 
-    auto trajectory = behaviour.generateRoughTrajectory(ego, target, 2.5, .5);
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }}
+    };
 
-    ASSERT_EQ(trajectory.size(), 2.5 / .5);
 
-    auto last = trajectory[trajectory.size() - 1];
-    ASSERT_NEAR(last.s(), target.s(), .5);
-    ASSERT_NEAR(last.d(), target.d(), .5);
-    ASSERT_NEAR(last.v(), target.v(), .5);
+    auto kinematics = behaviour.getKinematics(ego, predictions, ego.lane());
+    ASSERT_LT(kinematics.v, ego.v());
+    ASSERT_GT(kinematics.v, carInFront.v());
+    ASSERT_LT(kinematics.a, 0);
 }
 
-TEST(Behaviour, GenerateRoughTrajectoryChaneLaneRight) {
+TEST(Behaviour, KinematicsCarBehindMaxS) {
     Behaviour behaviour{emptyMap()};
 
-
     auto ego = VehicleBuilder::newEgoBuilder()
-            .withS(0)
+            .withV(10)
+            .withS(MAX_S - 5)
             .withD(LANE_WIDTH / 2.)
-            .withV(10)
-            .withYaw(0)
             .build();
 
-    auto target = VehicleBuilder::newEgoBuilder()
-            .withS(25)
-            .withD(ego.d() + LANE_WIDTH)
-            .withV(10)
-            .withYaw(0)
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v())
+            .withS(5)
+            .withD(ego.d())
             .build();
 
-    auto trajectory = behaviour.generateRoughTrajectory(ego, target, 2.5, .5);
+    auto carBehind = VehicleBuilder::newBuilder(2)
+            .withV(ego.v())
+            .withS(ego.s() - 5)
+            .withD(ego.d())
+            .build();
 
-    ASSERT_EQ(trajectory.size(), 2.5 / .5);
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }},
+            prediction::Prediction{carBehind.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carBehind}
+                            }
+                    }
+            }}
+    };
 
-    auto last = trajectory[trajectory.size() - 1];
-    ASSERT_NEAR(last.s(), target.s(), .5);
-    ASSERT_NEAR(last.d(), target.d(), .5);
-    ASSERT_NEAR(last.v(), target.v(), .5);
+
+    auto kinematics = behaviour.getKinematics(ego, predictions, ego.lane());
+    ASSERT_EQ(kinematics.v, carInFront.v());
 }
 
 TEST(Behaviour, KeepLane) {
