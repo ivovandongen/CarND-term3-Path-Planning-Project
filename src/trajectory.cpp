@@ -204,8 +204,8 @@ Trajectory calculateTrajectory(const Map &map,
     // Add way points
     const int wps = 3;
     auto s_diff = targetState.target().s() < ego.s()
-            ? targetState.target().s() + MAX_S - ego.s()
-            : targetState.target().s() - ego.s();
+                  ? targetState.target().s() + MAX_S - ego.s()
+                  : targetState.target().s() - ego.s();
     for (size_t i = 0; i < wps; i++) {
         auto wp = map.getXY(std::fmod(ego.s() + (i + 1) * s_diff / wps, MAX_S),
                             targetState.target().d());
@@ -256,9 +256,16 @@ Trajectory calculateTrajectory(const Map &map,
             refState.ref_v -= .1;
         }
 
+        // Make sure we don't exceed the maximum speed
+        refState.ref_v = std::min(MAX_VELOCITY_MS, refState.ref_v);
+
         double N = (target_dist / (.02 * refState.ref_v));
         double x_point = x_add_on + (target_x) / N;
         double y_point = spline(x_point);
+
+        // Validate point
+        assert(x_point > x_add_on);
+        assert(distance(x_add_on, spline(x_add_on), x_point, y_point) <= MAX_VELOCITY_MS * .02 * 1.05);
 
         x_add_on = x_point;
 
