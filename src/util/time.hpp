@@ -14,4 +14,4 @@ inline timestamp unix_ts() {
     return ms.count();
 }
 
-} // timestamp
+} // namespace util
