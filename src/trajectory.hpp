@@ -57,5 +57,5 @@ Trajectory calculateTrajectory(const Map &map,
                                const Trajectory &previousPath,
                                size_t points = TRAJECTORY_POINTS);
 
-}
+} // namespace trajectory
 

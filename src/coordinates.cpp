@@ -36,4 +36,4 @@ Coordinates Coordinates::toLocal(const double ref_x, const double ref_y,
     return Coordinates::toLocal(x_, y_, ref_x, ref_y, ref_angle);
 }
 
-}
+} // namespace cartesian
