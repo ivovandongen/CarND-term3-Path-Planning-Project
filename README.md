@@ -4,7 +4,7 @@ Part of the Self-Driving Car nanodegree. Starter code and data from
 
 ## Build
 - `#>` `git submodule update --init --recursive`
-- `#>` `mkdir build && cd build && cmake && make`
+- `#>` `mkdir build && cd build && cmake .. && make`
 
 ## Run
 
