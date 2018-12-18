@@ -457,6 +457,150 @@ TEST(Behaviour, ChangeLaneRight) {
 
 }
 
+TEST(Behaviour, CarInBlindSpot) {
+    Behaviour behaviour{emptyMap()};
+
+    auto ego = VehicleBuilder::newEgoBuilder()
+            .withD(LANE_WIDTH / 2.)
+            .withV(util::mphToMs(MAX_VELOCITY_MPH))
+            .build();
+
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v() - 5)
+            .withD(ego.d())
+            .withS(ego.s() + 9)
+            .build();
+
+    auto carInBlindSpot = VehicleBuilder::newBuilder(2)
+            .withV(ego.v())
+            .withD(ego.d() + LANE_WIDTH)
+            .withS(ego.s() - 1)
+            .build();
+
+    // Start at keep_lane
+    behaviour.previous_state_ = State{Action::KEEP_LANE, VehicleBuilder::newEgoBuilder().withV(
+            util::mphToMs(MAX_VELOCITY_MPH) / 2).build()};
+    behaviour.previous_state_.ts_ = 0;
+
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }},
+            prediction::Prediction{carInBlindSpot.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInBlindSpot}
+                            }
+                    }
+            }}
+    };
+    auto nextState = behaviour.nextState(ego, predictions);
+    ASSERT_EQ(nextState.action(), Action::KEEP_LANE);
+}
+
+TEST(Behaviour, CarInLaneChangeTrajectorySlower) {
+    Behaviour behaviour{emptyMap()};
+
+    auto ego = VehicleBuilder::newEgoBuilder()
+            .withD(LANE_WIDTH / 2.)
+            .withV(util::mphToMs(MAX_VELOCITY_MPH))
+            .build();
+
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v() - 5)
+            .withD(ego.d())
+            .withS(ego.s() + 9)
+            .build();
+
+    auto carInTheWay = VehicleBuilder::newBuilder(2)
+            .withV(ego.v() - 2)
+            .withD(ego.d() + LANE_WIDTH)
+            .withS(ego.s() + 2)
+            .build();
+
+    // Start at keep_lane
+    behaviour.previous_state_ = State{Action::KEEP_LANE, VehicleBuilder::newEgoBuilder().withV(
+            util::mphToMs(MAX_VELOCITY_MPH) / 2).build()};
+    behaviour.previous_state_.ts_ = 0;
+
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }},
+            prediction::Prediction{carInTheWay.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInTheWay}
+                            }
+                    }
+            }}
+    };
+    auto nextState = behaviour.nextState(ego, predictions);
+    ASSERT_EQ(nextState.action(), Action::KEEP_LANE);
+}
+
+TEST(Behaviour, CarInLaneChangeTrajectoryEqualSpeed) {
+    Behaviour behaviour{emptyMap()};
+
+    auto ego = VehicleBuilder::newEgoBuilder()
+            .withD(LANE_WIDTH / 2.)
+            .withV(util::mphToMs(MAX_VELOCITY_MPH))
+            .build();
+
+    auto carInFront = VehicleBuilder::newBuilder(1)
+            .withV(ego.v() - 5)
+            .withD(ego.d())
+            .withS(ego.s() + 9)
+            .build();
+
+    auto carInTheWay = VehicleBuilder::newBuilder(2)
+            .withV(ego.v())
+            .withD(ego.d() + LANE_WIDTH)
+            .withS(ego.s() + 1)
+            .build();
+
+    // Start at keep_lane
+    behaviour.previous_state_ = State{Action::KEEP_LANE, VehicleBuilder::newEgoBuilder().withV(
+            util::mphToMs(MAX_VELOCITY_MPH) / 2).build()};
+    behaviour.previous_state_.ts_ = 0;
+
+    // Assume we change lanes as there are no vehicles detected in other lanes
+    auto predictions = {
+            prediction::Prediction{carInFront.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInFront}
+                            }
+                    }
+            }},
+            prediction::Prediction{carInTheWay.id(), {
+                    prediction::Trajectory{
+                            1,
+                            {
+                                    prediction::Waypoint{util::unix_ts(), carInTheWay}
+                            }
+                    }
+            }}
+    };
+    auto nextState = behaviour.nextState(ego, predictions);
+    ASSERT_EQ(nextState.action(), Action::KEEP_LANE);
+}
+
 TEST(Behaviour, FMT) {
     ASSERT_EQ("KEEP_LANE", fmt::format("{}", Action::KEEP_LANE));
     ASSERT_EQ("{KEEP_LANE, INIT}", fmt::format("{}", std::vector<Action>{Action::KEEP_LANE, Action::INIT}));

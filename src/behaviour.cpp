@@ -135,7 +135,7 @@ Behaviour::changeLaneTrajectory(const Vehicle &ego, Action action, const predict
         // TODO: t
         const Vehicle &vehicle = prediction.trajectories[0].trajectory[0].state;
         // TODO: overlap
-        if (std::abs(vehicle.s() - ego.s()) < 2 && vehicle.lane() == targetLane) {
+        if (util::diff_wrapped_abs(vehicle.s(), ego.s(), MAX_S) < 4 && vehicle.lane() == targetLane) {
             //If lane change is not possible, return empty trajectory.
             return {};
         }
@@ -206,7 +206,7 @@ Behaviour::getVehicleBehind(const Vehicle &ego, const prediction::Predictions &p
         // TODO: Handle alternative trajectories
         auto &vehicle = prediction.trajectories[0].trajectory[0].state;
         auto s_diff = util::diff_wrapped_abs(vehicle.s(), ego.s(), MAX_S);
-        if (vehicle.lane() == targetLane && vehicle.isBehindOf(ego) &&  s_diff < min_s_diff) {
+        if (vehicle.lane() == targetLane && vehicle.isBehindOf(ego) && s_diff < min_s_diff) {
             min_s_diff = s_diff;
             found = vehicle;
         }
