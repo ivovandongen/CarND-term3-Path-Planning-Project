@@ -6,8 +6,10 @@
 
 #include <fmt/format.h>
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<prediction::Waypoint> {
+struct formatter<prediction::Waypoint> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -22,7 +24,7 @@ struct fmt::formatter<prediction::Waypoint> {
 };
 
 template<>
-struct fmt::formatter<prediction::Trajectory> {
+struct formatter<prediction::Trajectory> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -38,7 +40,7 @@ struct fmt::formatter<prediction::Trajectory> {
 };
 
 template<>
-struct fmt::formatter<prediction::Prediction> {
+struct formatter<prediction::Prediction> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -53,5 +55,4 @@ struct fmt::formatter<prediction::Prediction> {
     }
 };
 
-
-
+} // namespace fmt

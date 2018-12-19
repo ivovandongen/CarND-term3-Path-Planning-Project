@@ -3,6 +3,7 @@
 #include <constants.hpp>
 #include <util/conversion.hpp>
 
+#include <cassert>
 #include <cmath>
 #include <functional>
 #include <map>

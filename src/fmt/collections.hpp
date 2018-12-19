@@ -5,8 +5,10 @@
 #include <sstream>
 #include <vector>
 
+namespace fmt {
+
 template<class T>
-struct fmt::formatter<std::vector<T>> {
+struct formatter<std::vector<T>> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -22,3 +24,5 @@ struct fmt::formatter<std::vector<T>> {
         return format_to(ctx.out(), "{{{}}}", ss.str());
     }
 };
+
+} // namespace fmt

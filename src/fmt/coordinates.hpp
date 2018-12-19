@@ -4,8 +4,10 @@
 
 #include <fmt/format.h>
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<cartesian::Coordinates> {
+struct formatter<cartesian::Coordinates> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -15,3 +17,5 @@ struct fmt::formatter<cartesian::Coordinates> {
         return format_to(ctx.out(), "{}x{}", c.x(), c.y());
     }
 };
+
+} // namespace fmt

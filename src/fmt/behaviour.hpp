@@ -5,8 +5,10 @@
 
 #include <fmt/format.h>
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<behaviour::Action> {
+struct formatter<behaviour::Action> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -27,7 +29,7 @@ struct fmt::formatter<behaviour::Action> {
 };
 
 template<>
-struct fmt::formatter<behaviour::State> {
+struct formatter<behaviour::State> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -42,3 +44,5 @@ struct fmt::formatter<behaviour::State> {
         );
     }
 };
+
+} // namespace fmt

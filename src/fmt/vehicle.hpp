@@ -4,8 +4,10 @@
 
 #include <fmt/format.h>
 
+namespace fmt {
+
 template<>
-struct fmt::formatter<Vehicle> {
+struct formatter<Vehicle> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
@@ -21,5 +23,4 @@ struct fmt::formatter<Vehicle> {
     }
 };
 
-
-
+} // namespace fmt
