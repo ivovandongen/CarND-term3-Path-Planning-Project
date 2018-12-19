@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 # Update submodules as needed
 option(GIT_SUBMODULE "Check submodules during build" ON)
-option(USE_LINTERS "Use linters to check code during build" ON)
+option(ENABLE_LINTERS "Enalbe linters to check code during build" ON)
+option(ENABLE_TESTS "Enable tests" ON)
 
 # Hacky stuff from original cmake file
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -74,4 +75,6 @@ target_link_libraries(PathPlanner libuWS json core)
 
 # Tests
 
-add_subdirectory(test)
+if (ENABLE_TESTS)
+    add_subdirectory(test)
+endif()
