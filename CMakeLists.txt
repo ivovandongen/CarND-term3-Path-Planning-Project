@@ -7,6 +7,15 @@ set(CMAKE_CXX_STANDARD 14)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 option(USE_LINTERS "Use linters to check code during build" ON)
 
+# Hacky stuff from original cmake file
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    include_directories(/usr/local/include)
+    include_directories(/usr/local/opt/openssl/include)
+    link_directories(/usr/local/lib)
+    link_directories(/usr/local/opt/openssl/lib)
+    link_directories(/usr/local/Cellar/libuv/1.11.0/lib)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
 # CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
