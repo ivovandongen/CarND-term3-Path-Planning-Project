@@ -2,6 +2,8 @@
 Part of the Self-Driving Car nanodegree. Starter code and data from 
 [Udacity](https://github.com/udacity/CarND-Path-Planning-Project).
 
+![gif](data/screencast.gif)
+
 ## Build
 - `#>` `git submodule update --init --recursive`
 - `#>` `mkdir build && cd build && cmake .. && make`
